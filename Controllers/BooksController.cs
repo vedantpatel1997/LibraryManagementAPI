@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.API.Controllers
 {
+    [Authorize]
     [EnableCors]
     [Route("api/[controller]")]
     [ApiController]
