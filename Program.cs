@@ -21,7 +21,7 @@ builder.Services.AddSwaggerGen();
 // Registering Services
 builder.Services.AddTransient<IBooksService, BooksService>();
 builder.Services.AddTransient<IUsersService, UsersService>();
-//builder.Services.AddScoped<IAuthorize, Authorize>();
+builder.Services.AddScoped<IAuthorize, Authorize>();
 builder.Services.AddTransient<IBooksUsersTransactions, BooksUsersTransactions>();
 builder.Services.AddDbContext<LibraryProjectContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("APIConnection")));
 
@@ -42,8 +42,7 @@ builder.Services.AddAuthentication(item =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authKey)),
         ValidateIssuer = false,
         ValidateAudience = false,
-        ClockSkew = TimeSpan.FromMinutes(5)
-        //ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero
     };
 });
 
