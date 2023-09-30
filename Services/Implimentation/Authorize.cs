@@ -16,8 +16,8 @@ namespace LibraryManagement.API.Container.Implimentation
     {
         private readonly LibraryProjectContext _dbContext;
         private readonly JWTSettings jwtSettings;
-        private readonly int tokenTime = 30;
-        private readonly int refreshTokenTime = 30;
+        private readonly int tokenTime = 20;
+        private readonly int refreshTokenTime = 2000;
 
         public Authorize(LibraryProjectContext dbContext, IOptions<JWTSettings> options)
         {
@@ -28,7 +28,7 @@ namespace LibraryManagement.API.Container.Implimentation
         public async Task<APIResponse<TokenResponse>> GenerateToken(UserCredentails usercred)
         {
             APIResponse<TokenResponse> response = new();
-            var user = await this._dbContext.Users.FirstOrDefaultAsync(x => x.Username == usercred.Username && x.Password == usercred.Password);
+            var user = await this._dbContext.Users.FirstOrDefaultAsync(x => (x.Username == usercred.Username || x.Email == usercred.Username) && x.Password == usercred.Password);
             if (user != null)
             {
                 // Generate Token

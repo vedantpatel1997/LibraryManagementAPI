@@ -19,7 +19,6 @@ namespace LibraryManagement.API.Modal
 
         public int Price { get; set; }
 
-        public string PriceCheck { get; set; }
 
     }
 }

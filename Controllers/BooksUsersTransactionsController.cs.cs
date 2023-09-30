@@ -1,9 +1,13 @@
 ﻿using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Modal;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.API.Controllers
 {
+    [EnableCors]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BooksUsersTransactionsController : ControllerBase

@@ -26,5 +26,13 @@ namespace LibraryManagement.API.Modal
 
         [StringLength(50)]
         public string Phone { get; set; } = null!;
+        [StringLength(10)]
+        public string? Password { get; set; }
+
+        [StringLength(10)]
+        public string? Role { get; set; }
+
+        [StringLength(50)]
+        public string? Username { get; set; }
     }
 }
