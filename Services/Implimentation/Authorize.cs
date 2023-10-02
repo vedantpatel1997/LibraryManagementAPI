@@ -16,8 +16,8 @@ namespace LibraryManagement.API.Container.Implimentation
     {
         private readonly LibraryProjectContext _dbContext;
         private readonly JWTSettings jwtSettings;
-        private readonly int tokenTime = 20;
-        private readonly int refreshTokenTime = 2000;
+        private readonly int tokenTime = 10;
+        private readonly int refreshTokenTime = 10;
 
         public Authorize(LibraryProjectContext dbContext, IOptions<JWTSettings> options)
         {
@@ -65,41 +65,37 @@ namespace LibraryManagement.API.Container.Implimentation
             var _refreshToken = await this._dbContext.AuthenticationRefreshTokens.FirstOrDefaultAsync(x => x.RefreshToken == tokenResponse.RefreshToken);
             if (_refreshToken != null)
             {
-                // Generate Token
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var tokenKey = Encoding.UTF8.GetBytes(this.jwtSettings.securityKey);
-                SecurityToken securityToken;
-                var principal = tokenHandler.ValidateToken(tokenResponse.Token, new TokenValidationParameters()
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(tokenKey),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                }, out securityToken);
+                // Retrieve the user's role from the database
+                var user = await this._dbContext.Users.FirstOrDefaultAsync(x => x.Username == _refreshToken.UserId);
 
-                var token = securityToken as JwtSecurityToken;
-                if (token != null && token.Header.Alg.Equals(SecurityAlgorithms.HmacSha256))
+                if (user != null)
                 {
-                    string username = principal.Identity.Name;
-                    var existData = await this._dbContext.AuthenticationRefreshTokens.FirstOrDefaultAsync(x => x.UserId == username && x.RefreshToken == tokenResponse.RefreshToken);
-                    if (existData != null)
-                    {
-                        var newToken = new JwtSecurityToken(
-                            claims: principal.Claims.ToArray(),
-                            expires: DateTime.Now.AddSeconds(refreshTokenTime),
-                            signingCredentials: new SigningCredentials(
-                                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.jwtSettings.securityKey)), SecurityAlgorithms.HmacSha256));
-                        var finalToken = tokenHandler.WriteToken(newToken);
+                    // Create a new claims identity with the user's role and name
+                    var newClaims = new List<Claim>
+            {
+                new Claim("name", user.Username),
+                new Claim("role", user.Role) // Add the user's role as a claim
+            };
 
-                        response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(username) };
-                        response.IsSuccess = true;
-                        response.ResponseCode = 200;
-                    }
+                    // Generate Token
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var tokenKey = Encoding.UTF8.GetBytes(this.jwtSettings.securityKey);
+
+                    var newToken = new JwtSecurityToken(
+                        claims: newClaims,
+                        expires: DateTime.Now.AddSeconds(refreshTokenTime),
+                        signingCredentials: new SigningCredentials(
+                            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.jwtSettings.securityKey)), SecurityAlgorithms.HmacSha256));
+                    var finalToken = tokenHandler.WriteToken(newToken);
+
+                    response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) };
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200;
                 }
                 else
                 {
                     response.ResponseCode = 401;
-                    response.ErrorMessage = "UnAuthorized";
+                    response.ErrorMessage = "User not found";
                 }
             }
             else
@@ -109,6 +105,8 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+
+
 
         public async Task<string> GenerateRefreshToken(string username)
         {
