@@ -16,8 +16,8 @@ namespace LibraryManagement.API.Container.Implimentation
     {
         private readonly LibraryProjectContext _dbContext;
         private readonly JWTSettings jwtSettings;
-        private readonly int tokenTime = 10;
-        private readonly int refreshTokenTime = 10;
+        private readonly int tokenTime = 30;
+        private readonly int refreshTokenTime = 120;
 
         public Authorize(LibraryProjectContext dbContext, IOptions<JWTSettings> options)
         {
