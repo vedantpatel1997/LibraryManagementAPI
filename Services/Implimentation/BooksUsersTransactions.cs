@@ -8,9 +8,9 @@ namespace LibraryManagement.API.Container.Implimentation
 {
     public class BooksUsersTransactions : IBooksUsersTransactions
     {
-        private readonly LibraryProjectContext _dbContext;
+        private readonly LibraryManagementContext _dbContext;
 
-        public BooksUsersTransactions(LibraryProjectContext dbContext)
+        public BooksUsersTransactions(LibraryManagementContext dbContext)
         {
             this._dbContext = dbContext;
         }
@@ -79,11 +79,11 @@ namespace LibraryManagement.API.Container.Implimentation
                     {
                         Salutation = join.u.Salutation,
                         UserId = join.u.UserId,
-                        Name = join.u.Name,
-                        Age = join.u.Age,
+                        Name = join.u.FirstName,
+                        Age = (int)join.u.Age,
                         Email = join.u.Email,
                         Phone = join.u.Phone,
-                        Dob = join.u.Dob,
+                        Dob = (DateTime)join.u.Dob,
                         Gender = join.u.Gender
                     })
                     .ToListAsync();
@@ -131,7 +131,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 if (isBookIssued)
                 {
                     response.ResponseCode = 400; // Bad Request
-                    response.ErrorMessage = $"{user.Salutation}.{user.Name} has already issued this book.";
+                    response.ErrorMessage = $"{user.Salutation}.{user.FirstName} has already issued this book.";
                     return response;
                 }
 
@@ -216,7 +216,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 if (!isBookIssued)
                 {
                     response.ResponseCode = 400; // Bad Request
-                    response.ErrorMessage = $"{user.Salutation}.{user.Name} has not issued this book.";
+                    response.ErrorMessage = $"{user.Salutation}.{user.FirstName} has not issued this book.";
                     return response;
                 }
 

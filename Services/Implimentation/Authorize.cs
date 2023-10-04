@@ -14,12 +14,12 @@ namespace LibraryManagement.API.Container.Implimentation
 {
     public class Authorize : IAuthorize
     {
-        private readonly LibraryProjectContext _dbContext;
+        private readonly LibraryManagementContext _dbContext;
         private readonly JWTSettings jwtSettings;
         private readonly int tokenTime = 30;
         private readonly int refreshTokenTime = 120;
 
-        public Authorize(LibraryProjectContext dbContext, IOptions<JWTSettings> options)
+        public Authorize(LibraryManagementContext dbContext, IOptions<JWTSettings> options)
         {
             this._dbContext = dbContext;
             this.jwtSettings = options.Value;

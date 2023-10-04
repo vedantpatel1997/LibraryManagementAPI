@@ -23,7 +23,8 @@ builder.Services.AddTransient<IBooksService, BooksService>();
 builder.Services.AddTransient<IUsersService, UsersService>();
 builder.Services.AddScoped<IAuthorize, Authorize>();
 builder.Services.AddTransient<IBooksUsersTransactions, BooksUsersTransactions>();
-builder.Services.AddDbContext<LibraryProjectContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("APIConnection")));
+builder.Services.AddDbContext<LibraryManagementContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("APIConnection")));
+
 
 
 // JWT Authorization

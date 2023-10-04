@@ -10,10 +10,10 @@ namespace LibraryManagement.API.Container.Implimentation
 {
     public class BooksService : IBooksService
     {
-        private readonly Repos.Models.LibraryProjectContext _dbContext;
+        private readonly Repos.Models.LibraryManagementContext _dbContext;
         private readonly IMapper _mapper;
 
-        public BooksService(LibraryProjectContext dbContext, IMapper mapper)
+        public BooksService(LibraryManagementContext dbContext, IMapper mapper)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));

@@ -9,10 +9,10 @@ namespace LibraryManagement.API.Container.Implimentation
 {
     public class UsersService : IUsersService
     {
-        private readonly LibraryProjectContext _dbContext;
+        private readonly LibraryManagementContext _dbContext;
         private readonly IMapper _mapper;
 
-        public UsersService(LibraryProjectContext dbContext, IMapper mapper)
+        public UsersService(LibraryManagementContext dbContext, IMapper mapper)
         {
             this._dbContext = dbContext;
             _mapper = mapper;
