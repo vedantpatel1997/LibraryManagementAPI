@@ -9,8 +9,12 @@ namespace LibraryManagement.API.Helper
         public AutoMapperHandler()
         {
             //CreateMap<Book, BookModal>().ForMember(item => item.PriceCheck, opt => opt.MapFrom(item => item.Price > 1100 ? "High Price" : "Good Price")).ReverseMap();
-            CreateMap<Book, BookModal>().ReverseMap();
+            CreateMap<Book, BookModal>()
+              .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
+              .ReverseMap();
             CreateMap<User, UserModal>().ReverseMap();
+            CreateMap<BookUpdateModal, Book>().ReverseMap();
+            CreateMap<Category, CategoryModal>().ReverseMap();
         }
     }
 }

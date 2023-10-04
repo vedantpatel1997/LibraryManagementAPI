@@ -1,52 +1,38 @@
 ﻿using AutoMapper;
-using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos;
 using LibraryManagement.API.Repos.Models;
+using LibraryManagement.API.Services.Interface;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace LibraryManagement.API.Container.Implimentation
+namespace LibraryManagement.API.Services.Implimentation
 {
-    public class BooksService : IBooksService
+    public class CategoryService : ICategoryService
     {
-        private readonly Repos.Models.LibraryManagementContext _dbContext;
+        private readonly LibraryManagementContext _dbContext;
         private readonly IMapper _mapper;
 
-        public BooksService(LibraryManagementContext dbContext, IMapper mapper)
+        public CategoryService(LibraryManagementContext dbContext, IMapper mapper)
         {
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _dbContext = dbContext;
+            _mapper = mapper;
         }
 
-        public async Task<APIResponse<List<BookModal>>> GetAll()
+        public async Task<APIResponse<CategoryModal>> Create(CategoryModal category)
         {
-            var response = new APIResponse<List<BookModal>>();
+            var response = new APIResponse<CategoryModal>();
             try
             {
-                var data = await _dbContext.Books.Include(book => book.Category).ToListAsync();
-                response.Data = _mapper.Map<List<Book>, List<BookModal>>(data);
-                response.IsSuccess = true;
-                response.ResponseCode = 200;
-            }
-            catch (Exception ex)
-            {
-                response.ErrorMessage = ex.Message;
-                response.ResponseCode = 500; // Internal Server Error
-            }
-            return response;
-        }
-
-        public async Task<APIResponse<BookUpdateModal>> Create(BookUpdateModal book)
-        {
-            var response = new APIResponse<BookUpdateModal>();
-            try
-            {
-                var data = _mapper.Map<BookUpdateModal, Book>(book);
+                var data = _mapper.Map<CategoryModal, Category>(category);
                 await _dbContext.AddAsync(data);
                 await _dbContext.SaveChangesAsync();
 
-                response.Data = _mapper.Map<Book, BookUpdateModal>(data);
+                response.Data = _mapper.Map<Category, CategoryModal>(data);
                 response.IsSuccess = true;
                 response.ResponseCode = 201; // Created
             }
@@ -58,15 +44,33 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-        public async Task<APIResponse<BookModal>> GetById(int bookId)
+        public async Task<APIResponse<List<CategoryModal>>> GetAll()
         {
-            var response = new APIResponse<BookModal>();
+            var response = new APIResponse<List<CategoryModal>>();
             try
             {
-                var data = await _dbContext.Books.Include(book => book.Category).FirstOrDefaultAsync(i => i.BookId == bookId);
+                var data = await _dbContext.Categories.ToListAsync();
+                response.Data = _mapper.Map<List<Category>, List<CategoryModal>>(data);
+                response.IsSuccess = true;
+                response.ResponseCode = 200;
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+
+        public async Task<APIResponse<CategoryModal>> GetById(int categoryId)
+        {
+            var response = new APIResponse<CategoryModal>();
+            try
+            {
+                var data = await _dbContext.Categories.FirstOrDefaultAsync(c => c.CategoryId == categoryId);
                 if (data != null)
                 {
-                    response.Data = _mapper.Map<Book, BookModal>(data);
+                    response.Data = _mapper.Map<Category, CategoryModal>(data);
                     response.IsSuccess = true;
                     response.ResponseCode = 200;
                 }
@@ -84,35 +88,33 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-        public async Task<APIResponse> Remove(int bookId)
+        public async Task<APIResponse> Remove(int categoryId)
         {
             var response = new APIResponse();
-
             try
             {
-                // Check if the book exists
-                var book = await _dbContext.Books.SingleOrDefaultAsync(b => b.BookId == bookId);
+                var category = await _dbContext.Categories.SingleOrDefaultAsync(c => c.CategoryId == categoryId);
 
-                if (book == null)
+                if (category == null)
                 {
                     response.ResponseCode = 404; // Not Found
                     response.ErrorMessage = "Data not found";
                     return response;
                 }
 
-                // Check if the book is issued by any user
-                var isBookIssued = await _dbContext.BookIssues.AnyAsync(bi => bi.BookId == bookId);
+                // Check if the category has associated books
+                var hasAssociatedBooks = _dbContext.Books.Any(b => b.CategoryId == categoryId);
 
-                if (isBookIssued)
+                if (hasAssociatedBooks)
                 {
-                    // Book is issued, generate an error response
+                    // Category has associated books, generate an error response
                     response.ResponseCode = 403; // Forbidden
-                    response.ErrorMessage = "This book is issued by a user and cannot be deleted.";
+                    response.ErrorMessage = "This category has associated books and cannot be deleted.";
                 }
                 else
                 {
-                    // Book is not issued, proceed with deletion
-                    _dbContext.Remove(book);
+                    // Category has no associated books, proceed with deletion
+                    _dbContext.Remove(category);
                     await _dbContext.SaveChangesAsync();
                     response.IsSuccess = true;
                     response.ResponseCode = 204; // No Content (successful delete)
@@ -123,21 +125,18 @@ namespace LibraryManagement.API.Container.Implimentation
                 response.ErrorMessage = ex.Message;
                 response.ResponseCode = 500; // Internal Server Error
             }
-
             return response;
         }
 
-
-
-        public async Task<APIResponse> Update(BookUpdateModal book, int bookId)
+        public async Task<APIResponse> Update(CategoryModal category, int categoryId)
         {
             var response = new APIResponse();
             try
             {
-                var existingBook = await _dbContext.Books.FirstOrDefaultAsync(i => i.BookId == bookId);
-                if (existingBook != null)
+                var existingCategory = await _dbContext.Categories.FirstOrDefaultAsync(c => c.CategoryId == categoryId);
+                if (existingCategory != null)
                 {
-                    _mapper.Map(book, existingBook);
+                    _mapper.Map(category, existingCategory);
                     await _dbContext.SaveChangesAsync();
                     response.IsSuccess = true;
                     response.ResponseCode = 200;

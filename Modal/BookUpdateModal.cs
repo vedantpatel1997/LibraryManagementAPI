@@ -1,9 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-
-namespace LibraryManagement.API.Modal
+﻿namespace LibraryManagement.API.Modal
 {
-    public class BookModal
+    public class BookUpdateModal
     {
         public int BookId { get; set; }
 
@@ -18,8 +15,6 @@ namespace LibraryManagement.API.Modal
         public int IssuedQuantity { get; set; }
 
         public int Price { get; set; }
-        public string CategoryId { get; set; }
-
-        public CategoryModal Category{ get; set; }
+        public int CategoryId { get; set; }
     }
 }

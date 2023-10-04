@@ -20,7 +20,7 @@ namespace LibraryManagement.API.Controllers
         {
             this._booksSvc = booksSvc;
         }
-
+        [AllowAnonymous]
         [HttpGet("GetAllBooks")]
         public async Task<IActionResult> GetAllBooks()
         {
@@ -37,14 +37,15 @@ namespace LibraryManagement.API.Controllers
 
 
         [HttpPost("Create")]
-        public async Task<IActionResult> create([FromBody] BookModal book)
+        public async Task<IActionResult> create([FromBody] BookUpdateModal book)
         {
             var data = await _booksSvc.Create(book);
             return Ok(data);
         }
 
+
         [HttpPut("Update")]
-        public async Task<IActionResult> Update(BookModal book, int id)
+        public async Task<IActionResult> Update(BookUpdateModal book, int id)
         {
             var data = await _booksSvc.Update(book, id);
             return Ok(data);
