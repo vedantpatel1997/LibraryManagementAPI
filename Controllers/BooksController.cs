@@ -34,6 +34,14 @@ namespace LibraryManagement.API.Controllers
             var data = await _booksSvc.GetById(id);
             return Ok(data);
         }
+        [AllowAnonymous]
+
+        [HttpPost("GetBooksByIds")]
+        public async Task<IActionResult> GetBooksByIds(int[] id)
+        {
+            var data = await _booksSvc.GetBooksByIds(id);
+            return Ok(data);
+        }
 
 
         [HttpPost("Create")]

@@ -8,6 +8,7 @@ namespace LibraryManagement.API.Container.Service
         Task<APIResponse<List<BookModal>>> GetAll();
         Task<APIResponse<BookUpdateModal>> Create(BookUpdateModal book);
         Task<APIResponse<BookModal>> GetById(int BookId);
+        Task<APIResponse<List<BookModal>>> GetBooksByIds(int[] bookIds);
         Task<APIResponse> Remove(int BookId);
         Task<APIResponse> Update(BookUpdateModal book, int id);
     }

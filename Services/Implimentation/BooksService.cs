@@ -83,6 +83,36 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+        public async Task<APIResponse<List<BookModal>>> GetBooksByIds(int[] bookIds)
+        {
+            var response = new APIResponse<List<BookModal>>();
+            try
+            {
+                var data = await _dbContext.Books
+                    .Include(book => book.Category)
+                    .Where(book => bookIds.Contains(book.BookId))
+                    .ToListAsync();
+
+                if (data != null && data.Count > 0)
+                {
+                    response.Data = _mapper.Map<List<Book>, List<BookModal>>(data);
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200;
+                }
+                else
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "Data not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+
 
         public async Task<APIResponse> Remove(int bookId)
         {
