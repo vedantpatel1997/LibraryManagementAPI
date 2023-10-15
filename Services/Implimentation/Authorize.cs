@@ -47,7 +47,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 var token = tokenHandler.CreateToken(tokenDesc);
                 var finalToken = tokenHandler.WriteToken(token);
 
-                response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) };
+                response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) , curUser = user.UserId};
                 response.IsSuccess = true;
                 response.ResponseCode = 200;
             }
@@ -88,7 +88,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.jwtSettings.securityKey)), SecurityAlgorithms.HmacSha256));
                     var finalToken = tokenHandler.WriteToken(newToken);
 
-                    response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) };
+                    response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username), curUser = user.UserId };
                     response.IsSuccess = true;
                     response.ResponseCode = 200;
                 }

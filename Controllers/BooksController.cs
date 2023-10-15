@@ -75,7 +75,7 @@ namespace LibraryManagement.API.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("AddToCart")]
+        [HttpPost("AddToCart")]
         public async Task<IActionResult> AddToCart(int userId, int bookId)
         {
             var data = await _booksSvc.AddToCart(bookId, userId);
@@ -83,7 +83,7 @@ namespace LibraryManagement.API.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("RemoveFromCart")]
+        [HttpPost("RemoveFromCart")]
         public async Task<IActionResult> RemoveFromCart(int userId, int bookId)
         {
             var data = await _booksSvc.RemoveFromCart( bookId, userId);
