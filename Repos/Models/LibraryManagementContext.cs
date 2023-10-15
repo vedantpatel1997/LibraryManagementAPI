@@ -21,6 +21,8 @@ public partial class LibraryManagementContext : DbContext
 
     public virtual DbSet<BookIssue> BookIssues { get; set; }
 
+    public virtual DbSet<Cart> Carts { get; set; }
+
     public virtual DbSet<Category> Categories { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -58,6 +60,21 @@ public partial class LibraryManagementContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.BookIssues)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_BookIssue_UserId");
+        });
+
+        modelBuilder.Entity<Cart>(entity =>
+        {
+            entity.HasKey(e => new { e.CartId, e.BookId, e.UserId }).HasName("PK__Cart__7F75535B9F884819");
+
+            entity.Property(e => e.CartId).ValueGeneratedOnAdd();
+
+            entity.HasOne(d => d.Book).WithMany(p => p.Carts)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BookIssueCart_BookId");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Carts)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BookIssueCart_UserId");
         });
 
         modelBuilder.Entity<Category>(entity =>

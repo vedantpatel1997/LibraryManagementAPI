@@ -65,6 +65,30 @@ namespace LibraryManagement.API.Controllers
             var data = await _booksSvc.Remove(id);
             return Ok(data);
         }
+
+        [AllowAnonymous]
+        [HttpGet("GetCartItemsByUserId")]
+        public async Task<IActionResult> GetCartItemsByUserId(int userId)
+        {
+            var data = await _booksSvc.GetCartItemsByUserId(userId);
+            return Ok(data);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("AddToCart")]
+        public async Task<IActionResult> AddToCart(int userId, int bookId)
+        {
+            var data = await _booksSvc.AddToCart(bookId, userId);
+            return Ok(data);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("RemoveFromCart")]
+        public async Task<IActionResult> RemoveFromCart(int userId, int bookId)
+        {
+            var data = await _booksSvc.RemoveFromCart( bookId, userId);
+            return Ok(data);
+        }
     }
 }
 

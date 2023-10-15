@@ -185,5 +185,116 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+
+        public async Task<APIResponse> RemoveFromCart(int bookId, int userId)
+        {
+            var response = new APIResponse();
+            var cartItem = await _dbContext.Carts.FirstOrDefaultAsync(a => a.BookId == bookId && a.UserId == userId);
+            try
+            {
+                if (cartItem == null)
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "Invalid data";
+
+                    return response;
+                }
+
+                _dbContext.Carts.Remove(cartItem);
+                await _dbContext.SaveChangesAsync();
+                response.ResponseCode = 200;
+                response.IsSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+
+        public async Task<APIResponse> AddToCart(int bookId, int userId)
+        {
+            var response = new APIResponse();
+
+            var cartitem = await _dbContext.Carts.FirstOrDefaultAsync(a => a.UserId == userId && a.BookId == bookId);
+
+            if (cartitem != null)
+            {
+                response.ResponseCode = 200;
+                response.ErrorMessage = "Book is Already in the cart";
+                return response;
+            }
+            var book = await _dbContext.Books.FindAsync(bookId);
+            var user = await _dbContext.Users.FindAsync(userId);
+
+            try
+            {
+                if (book != null && user != null)
+                {
+                    var addItem = new Cart()
+                    {
+                        BookId = bookId,
+                        UserId = userId,
+                    };
+                    await _dbContext.Carts.AddAsync(addItem);
+                    await _dbContext.SaveChangesAsync();
+                    response.ResponseCode = 200;
+                    response.IsSuccess = true;
+
+                }
+                else
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "Data not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+
+        public async Task<APIResponse<List<BookModal>>> GetCartItemsByUserId(int userId)
+        {
+            var response = new APIResponse<List<BookModal>>();
+            var user = await _dbContext.Users.FindAsync(userId);
+            if (user == null)
+            {
+                response.ResponseCode = 404; // Not Found
+                response.ErrorMessage = "User not found";
+                return response;
+            }
+            try
+            {
+                var Bookdata = from c in _dbContext.Carts
+                               join b in _dbContext.Books on c.BookId equals b.BookId
+                               join u in _dbContext.Users on c.UserId equals u.UserId
+                               where u.UserId == userId
+                               select b;
+
+                var books = await Bookdata.ToListAsync();
+
+                if (Bookdata != null)
+                {
+                    response.Data = _mapper.Map<List<Book>, List<BookModal>>(books);
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200;
+                }
+                else
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "Data not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
     }
 }

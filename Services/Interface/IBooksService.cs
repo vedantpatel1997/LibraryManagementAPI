@@ -11,6 +11,9 @@ namespace LibraryManagement.API.Container.Service
         Task<APIResponse<List<BookModal>>> GetBooksByIds(int[] bookIds);
         Task<APIResponse> Remove(int BookId);
         Task<APIResponse> Update(BookUpdateModal book, int id);
+        Task<APIResponse> AddToCart(int bookId, int userId);
+        Task<APIResponse> RemoveFromCart(int bookId, int userId);
+        Task<APIResponse<List<BookModal>>> GetCartItemsByUserId(int userId);
     }
 
 
