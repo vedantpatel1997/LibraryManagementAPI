@@ -38,8 +38,9 @@ namespace LibraryManagement.API.Container.Implimentation
                 {
                     Subject = new ClaimsIdentity(new Claim[]
                     {
-                        new Claim(ClaimTypes.Name,user.Username),
-                        new Claim(ClaimTypes.Role, user.Role)
+                        new Claim("name", user.Username.Trim()),
+                        new Claim(ClaimTypes.Role, user.Role.Trim()),
+                        new Claim("UserId", user.UserId.ToString()) // Add the user's ID as a claim
                     }),
                     Expires = DateTime.UtcNow.AddSeconds(tokenTime),
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256)
@@ -47,7 +48,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 var token = tokenHandler.CreateToken(tokenDesc);
                 var finalToken = tokenHandler.WriteToken(token);
 
-                response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) , curUser = user.UserId};
+                response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) };
                 response.IsSuccess = true;
                 response.ResponseCode = 200;
             }
@@ -72,10 +73,11 @@ namespace LibraryManagement.API.Container.Implimentation
                 {
                     // Create a new claims identity with the user's role and name
                     var newClaims = new List<Claim>
-            {
-                new Claim("name", user.Username),
-                new Claim("role", user.Role) // Add the user's role as a claim
-            };
+                    {
+                        new Claim("name", user.Username),
+                        new Claim("role", user.Role),
+                        new Claim("UserId", user.UserId.ToString()) // Add the user's ID as a claim
+                    };
 
                     // Generate Token
                     var tokenHandler = new JwtSecurityTokenHandler();
@@ -88,7 +90,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.jwtSettings.securityKey)), SecurityAlgorithms.HmacSha256));
                     var finalToken = tokenHandler.WriteToken(newToken);
 
-                    response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username), curUser = user.UserId };
+                    response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) };
                     response.IsSuccess = true;
                     response.ResponseCode = 200;
                 }
@@ -106,8 +108,6 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-
-
         public async Task<string> GenerateRefreshToken(string username)
         {
             var randomNumber = new byte[32];
@@ -124,16 +124,13 @@ namespace LibraryManagement.API.Container.Implimentation
                 {
                     await this._dbContext.AuthenticationRefreshTokens.AddAsync(new AuthenticationRefreshToken
                     {
-                        UserId = username,
                         TokenId = new Random().Next().ToString(),
                         RefreshToken = refreshToken,
-
                     });
                 }
                 await this._dbContext.SaveChangesAsync();
                 return refreshToken;
             }
         }
-
     }
 }

@@ -9,10 +9,12 @@ namespace LibraryManagement.API.Container.Implimentation
     public class BooksUsersTransactions : IBooksUsersTransactions
     {
         private readonly LibraryManagementContext _dbContext;
+        private readonly IBooksService _bookSvc;
 
-        public BooksUsersTransactions(LibraryManagementContext dbContext)
+        public BooksUsersTransactions(LibraryManagementContext dbContext, IBooksService bookService)
         {
             this._dbContext = dbContext;
+            this._bookSvc = bookService;
         }
         public async Task<APIResponse<List<BookModal>>> GetBooksByUserId(int userId)
         {
@@ -143,6 +145,9 @@ namespace LibraryManagement.API.Container.Implimentation
                     return response;
                 }
 
+                // Calculate the return date
+                var returnDate = issueSubmitDTO.IssueDate.AddDays(issueSubmitDTO.Days);
+
                 // Begin a transaction
                 using (var transaction = _dbContext.Database.BeginTransaction())
                 {
@@ -150,19 +155,22 @@ namespace LibraryManagement.API.Container.Implimentation
                     {
                         // Issue the book
                         var availableQty = book.AvailableQuantity - 1;
-                        var issueQu = book.IssuedQuantity + 1;
+                        var issueQty = book.IssuedQuantity + 1;
                         book.AvailableQuantity = availableQty;
-                        book.IssuedQuantity = issueQu;
+                        book.IssuedQuantity = issueQty;
                         await _dbContext.SaveChangesAsync();
 
                         // Create a book issue record
-                        var bookIssues = new BookIssue()
+                        var bookIssue = new BookIssue()
                         {
                             BookId = issueSubmitDTO.BookId,
-                            UserId = issueSubmitDTO.UserId
+                            UserId = issueSubmitDTO.UserId,
+                            IssueDate = issueSubmitDTO.IssueDate,
+                            ReturnDate = returnDate,
+                            Returned = issueSubmitDTO.Returned
                         };
 
-                        await _dbContext.BookIssues.AddAsync(bookIssues);
+                        await _dbContext.BookIssues.AddAsync(bookIssue);
                         await _dbContext.SaveChangesAsync();
 
                         // Commit the transaction
@@ -185,6 +193,106 @@ namespace LibraryManagement.API.Container.Implimentation
             {
                 response.ErrorMessage = ex.Message;
                 response.ResponseCode = 500; // Internal Server Error
+            }
+
+            return response;
+        }
+
+
+        public async Task<APIResponse> IssueBooks(List<IssueSubmitDTO> issueSubmitDTOs)
+        {
+            var response = new APIResponse();
+
+            using (var transaction = _dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    foreach (var issueSubmitDTO in issueSubmitDTOs)
+                    {
+                        // Retrieve the book
+                        var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == issueSubmitDTO.BookId);
+                        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == issueSubmitDTO.UserId);
+
+                        if (book == null)
+                        {
+                            response.ResponseCode = 404; // Not Found
+                            response.ErrorMessage = "Invalid Book.";
+                            return response;
+                        }
+                        else if (user == null)
+                        {
+                            response.ResponseCode = 404; // Not Found
+                            response.ErrorMessage = "Invalid User.";
+                            return response;
+                        }
+
+                        // Check if the book is already issued
+                        var isBookIssued = await _dbContext.BookIssues.AnyAsync(bi => bi.BookId == issueSubmitDTO.BookId && bi.UserId == issueSubmitDTO.UserId);
+
+                        if (isBookIssued)
+                        {
+                            response.ResponseCode = 400; // Bad Request
+                            response.ErrorMessage = $"{user.Salutation}.{user.FirstName} has already issued one of these book.";
+                            return response;
+                        }
+
+                        // Check available quantity
+                        if (book.AvailableQuantity == 0)
+                        {
+                            response.ResponseCode = 400; // Bad Request
+                            response.ErrorMessage = "No available copies of this book.";
+                            return response;
+                        }
+
+                        // Calculate the return date
+                        var returnDate = issueSubmitDTO.IssueDate.AddDays(issueSubmitDTO.Days);
+
+                        try
+                        {
+                            // Issue the book
+                            var availableQty = book.AvailableQuantity - 1;
+                            var issueQty = book.IssuedQuantity + 1;
+                            book.AvailableQuantity = availableQty;
+                            book.IssuedQuantity = issueQty;
+                            await _dbContext.SaveChangesAsync();
+
+                            // Create a book issue record
+                            var bookIssue = new BookIssue()
+                            {
+                                BookId = issueSubmitDTO.BookId,
+                                UserId = issueSubmitDTO.UserId,
+                                IssueDate = issueSubmitDTO.IssueDate,
+                                ReturnDate = returnDate,
+                                Returned = issueSubmitDTO.Returned
+                            };
+
+                            await _bookSvc.RemoveFromCart(issueSubmitDTO.BookId, issueSubmitDTO.UserId);
+
+                            await _dbContext.BookIssues.AddAsync(bookIssue);
+                            await _dbContext.SaveChangesAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            // Rollback the transaction in case of an error
+                            transaction.Rollback();
+
+                            response.ErrorMessage = ex.Message;
+                            response.ResponseCode = 500; // Internal Server Error
+                            return response; // Return the response immediately upon error
+                        }
+                    }
+
+                    // Commit the transaction after the loop
+                    transaction.Commit();
+
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200; // OK
+                }
+                catch (Exception ex)
+                {
+                    response.ErrorMessage = ex.Message;
+                    response.ResponseCode = 500; // Internal Server Error
+                }
             }
 
             return response;
@@ -241,7 +349,7 @@ namespace LibraryManagement.API.Container.Implimentation
                         await _dbContext.SaveChangesAsync();
 
                         // Create a book issue record
-                        var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x=> x.UserId == user.UserId && x.BookId==book.BookId);
+                        var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == user.UserId && x.BookId == book.BookId);
 
                         _dbContext.BookIssues.Remove(bookIssued);
                         await _dbContext.SaveChangesAsync();

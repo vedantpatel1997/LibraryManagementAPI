@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace LibraryManagement.API.Controllers
 {
     [EnableCors]
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BooksUsersTransactionsController : ControllerBase
@@ -34,6 +33,12 @@ namespace LibraryManagement.API.Controllers
         public async Task<IActionResult> IssueBook(IssueSubmitDTO issueSubmitDTO)
         {
             var data = await this._bUTransactionSvs.IssueBook(issueSubmitDTO);
+            return Ok(data);
+        }
+        [HttpPost("IssueBooks")]
+        public async Task<IActionResult> IssueBooks(List<IssueSubmitDTO> issueSubmitDTO)
+        {
+            var data = await this._bUTransactionSvs.IssueBooks(issueSubmitDTO);
             return Ok(data);
         }
         [HttpPost("SubmitBook")]

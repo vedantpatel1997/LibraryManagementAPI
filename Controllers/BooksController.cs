@@ -1,5 +1,6 @@
 ﻿using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Modal;
+using LibraryManagement.API.Repos.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -28,13 +29,12 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
 
-        [HttpGet("GetById")]
-        public async Task<IActionResult> GetById(int id)
+        [HttpGet("GetBookById")]
+        public async Task<IActionResult> GetBookById(int id)
         {
             var data = await _booksSvc.GetById(id);
             return Ok(data);
         }
-        [AllowAnonymous]
 
         [HttpPost("GetBooksByIds")]
         public async Task<IActionResult> GetBooksByIds(int[] id)
@@ -66,7 +66,6 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
 
-        [AllowAnonymous]
         [HttpGet("GetCartItemsByUserId")]
         public async Task<IActionResult> GetCartItemsByUserId(int userId)
         {
@@ -74,19 +73,17 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
 
-        [AllowAnonymous]
         [HttpPost("AddToCart")]
-        public async Task<IActionResult> AddToCart(int userId, int bookId)
+        public async Task<IActionResult> AddToCart(CartModal cart)
         {
-            var data = await _booksSvc.AddToCart(bookId, userId);
+            var data = await _booksSvc.AddToCart(cart.BookId, cart.UserId);
             return Ok(data);
         }
 
-        [AllowAnonymous]
         [HttpPost("RemoveFromCart")]
-        public async Task<IActionResult> RemoveFromCart(int userId, int bookId)
+        public async Task<IActionResult> RemoveFromCart(CartModal cart)
         {
-            var data = await _booksSvc.RemoveFromCart( bookId, userId);
+            var data = await _booksSvc.RemoveFromCart(cart.BookId, cart.UserId);
             return Ok(data);
         }
     }
