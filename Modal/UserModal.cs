@@ -7,32 +7,26 @@ namespace LibraryManagement.API.Modal
     {
         public int UserId { get; set; }
 
-        [StringLength(50)]
-        public string Salutation { get; set; } = null!;
+        public string Salutation { get; set; } 
 
-        [StringLength(50)]
-        public string Name { get; set; } = null!;
+        public string FirstName { get; set; } 
+
+        public string? MiddleName { get; set; }
+
+        public string LastName { get; set; } 
 
         public int Age { get; set; }
 
-        [Column(TypeName = "date")]
         public DateTime Dob { get; set; }
 
-        [StringLength(50)]
-        public string Gender { get; set; } = null!;
+        public string Gender { get; set; }
 
-        [StringLength(50)]
-        public string Email { get; set; } = null!;
+        public string Email { get; set; } 
 
-        [StringLength(50)]
-        public string Phone { get; set; } = null!;
-        [StringLength(10)]
-        public string? Password { get; set; }
-
-        [StringLength(10)]
+        public string Phone { get; set; } 
+       
         public string? Role { get; set; }
 
-        [StringLength(50)]
         public string? Username { get; set; }
     }
 }

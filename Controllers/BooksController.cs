@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace LibraryManagement.API.Controllers
 {
     [EnableCors]
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BooksController : ControllerBase

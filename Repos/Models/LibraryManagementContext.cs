@@ -29,7 +29,7 @@ public partial class LibraryManagementContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    
+  
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AuthenticationRefreshToken>(entity =>
@@ -48,7 +48,17 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<BookIssue>(entity =>
         {
-            entity.Property(e => e.Days).ValueGeneratedOnAdd();
+            entity.HasKey(e => new { e.IssueId, e.BookId, e.UserId }).HasName("PK__BookIssu__424F92E83653B14E");
+
+            entity.Property(e => e.IssueId).ValueGeneratedOnAdd();
+
+            entity.HasOne(d => d.Book).WithMany(p => p.BookIssues)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BookIssue_BookId");
+
+            entity.HasOne(d => d.User).WithMany(p => p.BookIssues)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BookIssue_UserId");
         });
 
         modelBuilder.Entity<Cart>(entity =>

@@ -1,4 +1,5 @@
-﻿using LibraryManagement.API.Container.Service;
+﻿using AutoMapper;
+using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
@@ -10,15 +11,17 @@ namespace LibraryManagement.API.Container.Implimentation
     {
         private readonly LibraryManagementContext _dbContext;
         private readonly IBooksService _bookSvc;
+        private readonly IMapper _mapper;
 
-        public BooksUsersTransactions(LibraryManagementContext dbContext, IBooksService bookService)
+        public BooksUsersTransactions(LibraryManagementContext dbContext, IBooksService bookService, IMapper mapper)
         {
             this._dbContext = dbContext;
             this._bookSvc = bookService;
+            _mapper = mapper;
         }
-        public async Task<APIResponse<List<BookModal>>> GetBooksByUserId(int userId)
+        public async Task<APIResponse<List<IssueDTO>>> GetBooksByUserId(int userId)
         {
-            var response = new APIResponse<List<BookModal>>();
+            var response = new APIResponse<List<IssueDTO>>();
 
             try
             {
@@ -31,22 +34,14 @@ namespace LibraryManagement.API.Container.Implimentation
                 }
 
                 // Query the database to get books issued to the user with the specified userId
-                var books = await _dbContext.Books
-                    .Join(_dbContext.BookIssues, b => b.BookId, bi => bi.BookId, (b, bi) => new { b, bi })
-                    .Where(join => join.bi.UserId == userId)
-                    .Select(join => new BookModal
-                    {
-                        BookId = join.b.BookId,
-                        Title = join.b.Title,
-                        Author = join.b.Author,
-                        TotalQuantity = join.b.TotalQuantity,
-                        AvailableQuantity = join.b.AvailableQuantity,
-                        IssuedQuantity = join.b.IssuedQuantity,
-                        Price = join.b.Price
-                    })
+                var issuedBooks = await _dbContext.BookIssues
+                    .Include(x => x.User)
+                    .Include(x => x.Book)
+                    .Include(x => x.Book.Category)
+                    .Where(x => x.UserId == userId)
                     .ToListAsync();
 
-                response.Data = books;
+                response.Data = _mapper.Map<List<BookIssue>, List<IssueDTO>>(issuedBooks);
                 response.IsSuccess = true;
                 response.ResponseCode = 200; // OK
             }
@@ -59,9 +54,9 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-        public async Task<APIResponse<List<UserModal>>> GetUsersByBookId(int bookId)
+        public async Task<APIResponse<List<IssueDTO>>> GetUsersByBookId(int bookId)
         {
-            var response = new APIResponse<List<UserModal>>();
+            var response = new APIResponse<List<IssueDTO>>();
 
             try
             {
@@ -74,23 +69,14 @@ namespace LibraryManagement.API.Container.Implimentation
                 }
 
                 // Query the database to get users who have issued the book with the specified bookId
-                var users = await _dbContext.Users
-                    .Join(_dbContext.BookIssues, u => u.UserId, bi => bi.UserId, (u, bi) => new { u, bi })
-                    .Where(join => join.bi.BookId == bookId)
-                    .Select(join => new UserModal
-                    {
-                        Salutation = join.u.Salutation,
-                        UserId = join.u.UserId,
-                        Name = join.u.FirstName,
-                        Age = (int)join.u.Age,
-                        Email = join.u.Email,
-                        Phone = join.u.Phone,
-                        Dob = (DateTime)join.u.Dob,
-                        Gender = join.u.Gender
-                    })
+                var issuedToUsers = await _dbContext.BookIssues
+                    .Include(x => x.User)
+                    .Include(x => x.Book)
+                    .Include(x => x.Book.Category)
+                    .Where(x => x.BookId == bookId)
                     .ToListAsync();
 
-                response.Data = users;
+                response.Data = _mapper.Map<List<BookIssue>, List<IssueDTO>>(issuedToUsers);
                 response.IsSuccess = true;
                 response.ResponseCode = 200; // OK
             }

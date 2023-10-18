@@ -9,7 +9,6 @@ namespace LibraryManagement.API.Controllers
 {
     [EnableCors]
     [Route("api/[controller]")]
-    [Authorize]
     [ApiController]
     public class UsersController : ControllerBase
     {
