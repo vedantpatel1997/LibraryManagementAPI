@@ -119,7 +119,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 if (isBookIssued)
                 {
                     response.ResponseCode = 400; // Bad Request
-                    response.ErrorMessage = $"{user.Salutation}.{user.FirstName} has already issued this book.";
+                    response.ErrorMessage = $"{user.FirstName} has already issued this book.";
                     return response;
                 }
 
@@ -217,7 +217,7 @@ namespace LibraryManagement.API.Container.Implimentation
                         if (isBookIssued)
                         {
                             response.ResponseCode = 400; // Bad Request
-                            response.ErrorMessage = $"{user.Salutation}.{user.FirstName} has already issued one of these book.";
+                            response.ErrorMessage = $"{user.FirstName} has already issued one of these book.";
                             return response;
                         }
 
@@ -305,7 +305,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 if (!isBookIssued)
                 {
                     response.ResponseCode = 400; // Bad Request
-                    response.ErrorMessage = $"{user.Salutation}.{user.FirstName} has not issued this book.";
+                    response.ErrorMessage = $"{user.FirstName} has not issued this book.";
                     return response;
                 }
 

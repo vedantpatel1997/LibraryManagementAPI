@@ -124,6 +124,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 {
                     await this._dbContext.AuthenticationRefreshTokens.AddAsync(new AuthenticationRefreshToken
                     {
+                        UserId = username,
                         TokenId = new Random().Next().ToString(),
                         RefreshToken = refreshToken,
                     });

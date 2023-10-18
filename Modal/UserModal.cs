@@ -7,15 +7,9 @@ namespace LibraryManagement.API.Modal
     {
         public int UserId { get; set; }
 
-        public string Salutation { get; set; } 
-
         public string FirstName { get; set; } 
 
-        public string? MiddleName { get; set; }
-
         public string LastName { get; set; } 
-
-        public int Age { get; set; }
 
         public DateTime Dob { get; set; }
 
@@ -28,5 +22,6 @@ namespace LibraryManagement.API.Modal
         public string? Role { get; set; }
 
         public string? Username { get; set; }
+        public string? Password { get; set; }
     }
 }

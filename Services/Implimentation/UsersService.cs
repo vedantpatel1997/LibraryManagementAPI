@@ -52,6 +52,13 @@ namespace LibraryManagement.API.Container.Implimentation
             catch (Exception ex)
             {
                 response.ErrorMessage = ex.Message;
+                int lastDotIndex = ex.InnerException.Message.LastIndexOf('.');
+                int secondLastDotIndex = ex.InnerException.Message.LastIndexOf(". ", lastDotIndex - 1);
+                if (lastDotIndex >= 0)
+                {
+                    string lastMessage = ex.InnerException.Message.Substring(secondLastDotIndex + 1).Trim();
+                    response.ErrorMessage = lastMessage;
+                }
                 response.ResponseCode = 500; // Internal Server Error
             }
             return response;
