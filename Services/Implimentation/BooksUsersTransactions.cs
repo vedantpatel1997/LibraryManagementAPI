@@ -152,6 +152,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             BookId = issueDTO.BookId,
                             UserId = issueDTO.UserId,
                             IssueDate = DateTime.Now,
+                            Days = issueDTO.Days,
                         };
 
                         await _dbContext.BookIssues.AddAsync(bookIssue);
@@ -244,6 +245,7 @@ namespace LibraryManagement.API.Container.Implimentation
                                 BookId = curIssueDTO.BookId,
                                 UserId = curIssueDTO.UserId,
                                 IssueDate = DateTime.Now,
+                                Days = curIssueDTO.Days
                             };
 
                             await _bookSvc.RemoveFromCart(curIssueDTO.BookId, curIssueDTO.UserId);
@@ -329,7 +331,21 @@ namespace LibraryManagement.API.Container.Implimentation
                         // Getting a book issue record
                         var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId && x.BookId == SubmitDTO.BookId);
 
+                        // Add book to submitInfo
+
+                        var submittedBook = new SubmitBooksInfo()
+                        {
+                            BookId = bookIssued.BookId,
+                            UserId = bookIssued.UserId,
+                            IssueDate = bookIssued.IssueDate,
+                            ReturnDate = DateTime.Now,
+                            Days = bookIssued.Days,
+                        };
+
+                        _dbContext.SubmitBooksInfos.Add(submittedBook);
                         _dbContext.BookIssues.Remove(bookIssued);
+
+
                         await _dbContext.SaveChangesAsync();
 
                         // Commit the transaction

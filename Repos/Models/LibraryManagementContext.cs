@@ -29,6 +29,7 @@ public partial class LibraryManagementContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AuthenticationRefreshToken>(entity =>
@@ -82,7 +83,7 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<SubmitBooksInfo>(entity =>
         {
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasKey(e => e.Id).HasName("PK__SubmitBo__3213E83FA5838FEB");
         });
 
         modelBuilder.Entity<User>(entity =>
