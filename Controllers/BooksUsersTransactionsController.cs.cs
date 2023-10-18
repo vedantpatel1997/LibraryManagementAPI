@@ -30,21 +30,21 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         } 
         [HttpPost("IssueBook")]
-        public async Task<IActionResult> IssueBook(IssueSubmitDTO issueSubmitDTO)
+        public async Task<IActionResult> IssueBook(IssueDTO issueDTO)
         {
-            var data = await this._bUTransactionSvs.IssueBook(issueSubmitDTO);
+            var data = await this._bUTransactionSvs.IssueBook(issueDTO);
             return Ok(data);
         }
         [HttpPost("IssueBooks")]
-        public async Task<IActionResult> IssueBooks(List<IssueSubmitDTO> issueSubmitDTO)
+        public async Task<IActionResult> IssueBooks(List<IssueDTO> issueDTOs)
         {
-            var data = await this._bUTransactionSvs.IssueBooks(issueSubmitDTO);
+            var data = await this._bUTransactionSvs.IssueBooks(issueDTOs);
             return Ok(data);
         }
         [HttpPost("SubmitBook")]
-        public async Task<IActionResult> SubmitBook(IssueSubmitDTO issueSubmitDTO)
+        public async Task<IActionResult> SubmitBook(SubmitDTO SubmitDTO)
         {
-            var data = await this._bUTransactionSvs.SubmitBook(issueSubmitDTO);
+            var data = await this._bUTransactionSvs.SubmitBook(SubmitDTO);
             return Ok(data);
         }
     }

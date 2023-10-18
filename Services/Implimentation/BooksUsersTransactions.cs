@@ -104,15 +104,15 @@ namespace LibraryManagement.API.Container.Implimentation
         }
 
 
-        public async Task<APIResponse> IssueBook(IssueSubmitDTO issueSubmitDTO)
+        public async Task<APIResponse> IssueBook(IssueDTO issueDTO)
         {
             var response = new APIResponse();
 
             try
             {
                 // Retrieve the book
-                var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == issueSubmitDTO.BookId);
-                var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == issueSubmitDTO.UserId);
+                var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == issueDTO.BookId);
+                var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == issueDTO.UserId);
 
                 if (book == null)
                 {
@@ -128,7 +128,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 }
 
                 // Check if the book is already issued
-                var isBookIssued = await _dbContext.BookIssues.AnyAsync(bi => bi.BookId == issueSubmitDTO.BookId && bi.UserId == issueSubmitDTO.UserId);
+                var isBookIssued = await _dbContext.BookIssues.AnyAsync(bi => bi.BookId == issueDTO.BookId && bi.UserId == issueDTO.UserId);
 
                 if (isBookIssued)
                 {
@@ -146,7 +146,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 }
 
                 // Calculate the return date
-                var returnDate = issueSubmitDTO.IssueDate.AddDays(issueSubmitDTO.Days);
+                var returnDate = issueDTO.IssueDate?.AddDays(issueDTO.Days);
 
                 // Begin a transaction
                 using (var transaction = _dbContext.Database.BeginTransaction())
@@ -163,11 +163,9 @@ namespace LibraryManagement.API.Container.Implimentation
                         // Create a book issue record
                         var bookIssue = new BookIssue()
                         {
-                            BookId = issueSubmitDTO.BookId,
-                            UserId = issueSubmitDTO.UserId,
-                            IssueDate = issueSubmitDTO.IssueDate,
-                            ReturnDate = returnDate,
-                            Returned = issueSubmitDTO.Returned
+                            BookId = issueDTO.BookId,
+                            UserId = issueDTO.UserId,
+                            IssueDate = DateTime.Now,
                         };
 
                         await _dbContext.BookIssues.AddAsync(bookIssue);
@@ -199,7 +197,7 @@ namespace LibraryManagement.API.Container.Implimentation
         }
 
 
-        public async Task<APIResponse> IssueBooks(List<IssueSubmitDTO> issueSubmitDTOs)
+        public async Task<APIResponse> IssueBooks(List<IssueDTO> issueDTOs)
         {
             var response = new APIResponse();
 
@@ -207,11 +205,11 @@ namespace LibraryManagement.API.Container.Implimentation
             {
                 try
                 {
-                    foreach (var issueSubmitDTO in issueSubmitDTOs)
+                    foreach (var curIssueDTO in issueDTOs)
                     {
                         // Retrieve the book
-                        var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == issueSubmitDTO.BookId);
-                        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == issueSubmitDTO.UserId);
+                        var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == curIssueDTO.BookId);
+                        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == curIssueDTO.UserId);
 
                         if (book == null)
                         {
@@ -227,7 +225,7 @@ namespace LibraryManagement.API.Container.Implimentation
                         }
 
                         // Check if the book is already issued
-                        var isBookIssued = await _dbContext.BookIssues.AnyAsync(bi => bi.BookId == issueSubmitDTO.BookId && bi.UserId == issueSubmitDTO.UserId);
+                        var isBookIssued = await _dbContext.BookIssues.AnyAsync(bi => bi.BookId == curIssueDTO.BookId && bi.UserId == curIssueDTO.UserId);
 
                         if (isBookIssued)
                         {
@@ -244,8 +242,6 @@ namespace LibraryManagement.API.Container.Implimentation
                             return response;
                         }
 
-                        // Calculate the return date
-                        var returnDate = issueSubmitDTO.IssueDate.AddDays(issueSubmitDTO.Days);
 
                         try
                         {
@@ -259,14 +255,12 @@ namespace LibraryManagement.API.Container.Implimentation
                             // Create a book issue record
                             var bookIssue = new BookIssue()
                             {
-                                BookId = issueSubmitDTO.BookId,
-                                UserId = issueSubmitDTO.UserId,
-                                IssueDate = issueSubmitDTO.IssueDate,
-                                ReturnDate = returnDate,
-                                Returned = issueSubmitDTO.Returned
+                                BookId = curIssueDTO.BookId,
+                                UserId = curIssueDTO.UserId,
+                                IssueDate = DateTime.Now,
                             };
 
-                            await _bookSvc.RemoveFromCart(issueSubmitDTO.BookId, issueSubmitDTO.UserId);
+                            await _bookSvc.RemoveFromCart(curIssueDTO.BookId, curIssueDTO.UserId);
 
                             await _dbContext.BookIssues.AddAsync(bookIssue);
                             await _dbContext.SaveChangesAsync();
@@ -299,16 +293,15 @@ namespace LibraryManagement.API.Container.Implimentation
         }
 
 
-
-        public async Task<APIResponse> SubmitBook(IssueSubmitDTO issueSubmitDTO)
+        public async Task<APIResponse> SubmitBook(SubmitDTO SubmitDTO)
         {
             var response = new APIResponse();
 
             try
             {
                 // Retrieve the book
-                var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == issueSubmitDTO.BookId);
-                var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == issueSubmitDTO.UserId);
+                var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == SubmitDTO.BookId);
+                var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId);
 
                 if (book == null || user == null)
                 {
@@ -319,7 +312,7 @@ namespace LibraryManagement.API.Container.Implimentation
 
 
                 // Check if the book is already issued
-                var isBookIssued = await _dbContext.BookIssues.AnyAsync(bi => bi.BookId == issueSubmitDTO.BookId && bi.UserId == issueSubmitDTO.UserId);
+                var isBookIssued = await _dbContext.BookIssues.AnyAsync(bi => bi.BookId == SubmitDTO.BookId && bi.UserId == SubmitDTO.UserId);
 
                 if (!isBookIssued)
                 {
@@ -348,8 +341,8 @@ namespace LibraryManagement.API.Container.Implimentation
                         book.IssuedQuantity = issueQu;
                         await _dbContext.SaveChangesAsync();
 
-                        // Create a book issue record
-                        var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == user.UserId && x.BookId == book.BookId);
+                        // Getting a book issue record
+                        var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId && x.BookId == SubmitDTO.BookId);
 
                         _dbContext.BookIssues.Remove(bookIssued);
                         await _dbContext.SaveChangesAsync();

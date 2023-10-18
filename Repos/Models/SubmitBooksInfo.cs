@@ -6,18 +6,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.API.Repos.Models;
 
-[Keyless]
-[Table("BookIssue")]
-public partial class BookIssue
+[Table("SubmitBooksInfo")]
+public partial class SubmitBooksInfo
 {
-    public int IssueId { get; set; }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
 
+    [Column("bookId")]
     public int BookId { get; set; }
 
+    [Column("userId")]
     public int UserId { get; set; }
 
-    [Column(TypeName = "date")]
+    [Column("issueDate", TypeName = "date")]
     public DateTime IssueDate { get; set; }
 
+    [Column("returnDate", TypeName = "date")]
+    public DateTime ReturnDate { get; set; }
+
+    [Column("days")]
     public int Days { get; set; }
 }

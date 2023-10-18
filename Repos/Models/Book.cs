@@ -26,9 +26,6 @@ public partial class Book
     public int CategoryId { get; set; }
 
     [InverseProperty("Book")]
-    public virtual ICollection<BookIssue> BookIssues { get; set; } = new List<BookIssue>();
-
-    [InverseProperty("Book")]
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     [ForeignKey("CategoryId")]

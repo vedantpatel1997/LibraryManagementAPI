@@ -25,12 +25,11 @@ public partial class LibraryManagementContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<SubmitBooksInfo> SubmitBooksInfos { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=localhost\\SQLEXPRESS22;Initial Catalog=LibraryManagement;User ID=sa;Password=Vedant@1997;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;");
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AuthenticationRefreshToken>(entity =>
@@ -49,17 +48,7 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<BookIssue>(entity =>
         {
-            entity.HasKey(e => new { e.IssueId, e.BookId, e.UserId }).HasName("PK__BookIssu__424F92E89BC99445");
-
-            entity.Property(e => e.IssueId).ValueGeneratedOnAdd();
-
-            entity.HasOne(d => d.Book).WithMany(p => p.BookIssues)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_BookIssue_BookId");
-
-            entity.HasOne(d => d.User).WithMany(p => p.BookIssues)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_BookIssue_UserId");
+            entity.Property(e => e.Days).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<Cart>(entity =>
@@ -80,6 +69,11 @@ public partial class LibraryManagementContext : DbContext
         modelBuilder.Entity<Category>(entity =>
         {
             entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A0B1C89C560");
+        });
+
+        modelBuilder.Entity<SubmitBooksInfo>(entity =>
+        {
+            entity.Property(e => e.Id).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<User>(entity =>
