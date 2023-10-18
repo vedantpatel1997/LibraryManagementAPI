@@ -325,7 +325,6 @@ namespace LibraryManagement.API.Container.Implimentation
                         var issueQu = book.IssuedQuantity - 1;
                         book.AvailableQuantity = availableQty;
                         book.IssuedQuantity = issueQu;
-                        await _dbContext.SaveChangesAsync();
 
                         // Getting a book issue record
                         var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId && x.BookId == SubmitDTO.BookId);

@@ -1,7 +1,4 @@
-﻿using LibraryManagement.API.Repos.Models;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace LibraryManagement.API.Modal
+﻿namespace LibraryManagement.API.Modal
 {
     public class IssueDTO
     {
@@ -9,8 +6,8 @@ namespace LibraryManagement.API.Modal
         public int UserId { get; set; }
         public int Days { get; set; }
         public DateTime? IssueDate { get; set; }
-        public Book? Book { get; set; }
-        public User? User { get; set; }
+        public BookModal? Book { get; set; }
+        public UserModal? User { get; set; }
     }
 
 

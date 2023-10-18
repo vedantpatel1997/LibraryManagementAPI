@@ -18,7 +18,7 @@ namespace LibraryManagement.API.Modal
         public int IssuedQuantity { get; set; }
 
         public int Price { get; set; }
-        public string CategoryId { get; set; }
+        public int CategoryId { get; set; }
 
         public CategoryModal Category{ get; set; }
     }
