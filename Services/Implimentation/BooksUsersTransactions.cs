@@ -54,6 +54,11 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
+        public Task<APIResponse<List<IssueDTO>>> GetBooksHistoryByUserId(int bookId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<APIResponse<List<IssueDTO>>> GetUsersByBookId(int bookId)
         {
             var response = new APIResponse<List<IssueDTO>>();

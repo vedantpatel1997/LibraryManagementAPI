@@ -47,5 +47,12 @@ namespace LibraryManagement.API.Controllers
             var data = await this._bUTransactionSvs.SubmitBook(SubmitDTO);
             return Ok(data);
         }
+
+        [HttpGet("GetBooksHistoryByUserId")]
+        public async Task<IActionResult> GetBooksHistoryByUserId(int userId)
+        {
+            var data = await _bUTransactionSvs.GetBooksHistoryByUserId(userId);
+            return Ok(data);
+        }
     }
 }

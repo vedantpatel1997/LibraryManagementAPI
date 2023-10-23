@@ -7,6 +7,7 @@ namespace LibraryManagement.API.Container.Service
     {
         Task<APIResponse<List<IssueDTO>>> GetBooksByUserId(int userId);
         Task<APIResponse<List<IssueDTO>>> GetUsersByBookId(int bookId);
+        Task<APIResponse<List<IssueDTO>>> GetBooksHistoryByUserId(int bookId);
         Task<APIResponse> IssueBook(IssueDTO issueDTO);
         Task<APIResponse> IssueBooks(List<IssueDTO> issueDTO);
         Task<APIResponse> SubmitBook(SubmitDTO SubmitDTO);
