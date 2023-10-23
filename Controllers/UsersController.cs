@@ -74,5 +74,12 @@ namespace LibraryManagement.API.Controllers
             var data = await _usersSvc.GetAddressByUserId(userId);
             return Ok(data);
         }
+
+        [HttpPost("UpdatePassword")]
+        public async Task<IActionResult> UpdatePassword([FromBody] UpdatePassword password)
+        {
+            var data = await _usersSvc.UpdatePassword(password);
+            return Ok(data);
+        }
     }
 }

@@ -3,6 +3,7 @@ using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.Text;
@@ -329,6 +330,52 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+
+        public async Task<APIResponse> UpdatePassword(UpdatePassword password)
+        {
+            APIResponse response = new APIResponse();
+            try
+            {
+                // Find the user whose password you want to update
+                var user = await _dbContext.Users.FindAsync(password.userId); // Replace userId with the appropriate method to find the user based on your application's logic
+
+                if (user == null)
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "User not found.";
+                    return response;
+                }
+
+                // Check if the old password matches the current password
+                if (user.Password != password.oldPassword)
+                {
+                    response.ResponseCode = 400; // Bad Request
+                    response.ErrorMessage = "Invalid credentials";
+                    return response;
+                }
+
+                user.Password = password.newPassword;
+
+                // Save changes to the database
+                await _dbContext.SaveChangesAsync();
+
+                response.IsSuccess = true;
+                response.ResponseCode = 200; // OK
+            }
+            catch (DbUpdateException ex)
+            {
+                response.ResponseCode = 400; // Bad Request
+                response.ErrorMessage = "Failed to update the password.";
+            }
+            catch (Exception ex)
+            {
+                response.ResponseCode = 500; // Internal Server Error
+                response.ErrorMessage = ex.Message;
+            }
+            return response;
+        }
+
+
 
     }
 

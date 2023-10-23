@@ -10,6 +10,7 @@ namespace LibraryManagement.API.Container.Service
         Task<APIResponse<UserModal>> GetById(int userId);
         Task<APIResponse> Remove(int userId);
         Task<APIResponse> Update(UserModal user, int id);
+        Task<APIResponse> UpdatePassword(UpdatePassword password);
         Task<APIResponse<AddressModal>> CreateAddress(AddressModal addressData, int userId);
         Task<APIResponse<AddressModal>> UpdateAddress(AddressModal addressData, int userId);
         Task<APIResponse<AddressModal>> GetAddressByUserId(int userId);
