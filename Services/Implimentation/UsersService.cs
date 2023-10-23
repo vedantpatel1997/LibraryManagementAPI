@@ -4,6 +4,8 @@ using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.Internal;
+using System.Text;
 
 namespace LibraryManagement.API.Container.Implimentation
 {
@@ -41,24 +43,27 @@ namespace LibraryManagement.API.Container.Implimentation
             APIResponse<UserModal> response = new APIResponse<UserModal>();
             try
             {
-                User data = _mapper.Map<UserModal, User>(user);
-                await _dbContext.AddAsync(data);
-                await _dbContext.SaveChangesAsync();
+                // Check for duplicate values
+                var duplicateValue = await GetDuplicateValue(user);
+                if (!string.IsNullOrEmpty(duplicateValue))
+                {
+                    response.ResponseCode = 400; // Bad Request
+                    response.ErrorMessage = duplicateValue;
+                }
+                else
+                {
+                    User data = _mapper.Map<UserModal, User>(user);
+                    await _dbContext.Users.AddAsync(data);
+                    await _dbContext.SaveChangesAsync();
 
-                response.Data = _mapper.Map<User, UserModal>(data);
-                response.IsSuccess = true;
-                response.ResponseCode = 201; // Created
+                    response.Data = _mapper.Map<User, UserModal>(data);
+                    response.IsSuccess = true;
+                    response.ResponseCode = 201; // Created
+                }
             }
             catch (Exception ex)
             {
                 response.ErrorMessage = ex.Message;
-                int lastDotIndex = ex.InnerException.Message.LastIndexOf('.');
-                int secondLastDotIndex = ex.InnerException.Message.LastIndexOf(". ", lastDotIndex - 1);
-                if (lastDotIndex >= 0)
-                {
-                    string lastMessage = ex.InnerException.Message.Substring(secondLastDotIndex + 1).Trim();
-                    response.ErrorMessage = lastMessage;
-                }
                 response.ResponseCode = 500; // Internal Server Error
             }
             return response;
@@ -142,10 +147,28 @@ namespace LibraryManagement.API.Container.Implimentation
                 var existingUser = await _dbContext.Users.FirstOrDefaultAsync(i => i.UserId == userId);
                 if (existingUser != null)
                 {
-                    _mapper.Map(user, existingUser);
-                    await _dbContext.SaveChangesAsync();
-                    response.IsSuccess = true;
-                    response.ResponseCode = 200;
+                    // Check for duplicate values
+                    var duplicateValue = await GetDuplicateValue(user);
+                    if (!string.IsNullOrEmpty(duplicateValue))
+                    {
+                        response.ResponseCode = 400; // Bad Request
+                        response.ErrorMessage = duplicateValue;
+                    }
+                    else
+                    {
+                        // Saving the data
+                        existingUser.FirstName = user.FirstName;
+                        existingUser.LastName = user.LastName;
+                        existingUser.Username = user.Username;
+                        existingUser.Email = user.Email;
+                        existingUser.Dob = user.Dob;
+                        existingUser.Gender = user.Gender;
+                        existingUser.Phone = user.Phone;
+
+                        await _dbContext.SaveChangesAsync();
+                        response.IsSuccess = true;
+                        response.ResponseCode = 200;
+                    }
                 }
                 else
                 {
@@ -160,5 +183,155 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+
+        private async Task<string> GetDuplicateValue(UserModal user)
+        {
+            if (await _dbContext.Users.AnyAsync(u =>
+                (u.UserId != user.UserId) && // Exclude the current user being updated
+                (u.Username == user.Username)))
+            {
+                return "Username is already registered with us.";
+            }
+            if (await _dbContext.Users.AnyAsync(u =>
+                (u.UserId != user.UserId) && // Exclude the current user being updated
+                (u.Email == user.Email)))
+            {
+                return "Email already exists.";
+            }
+            if (await _dbContext.Users.AnyAsync(u =>
+                (u.UserId != user.UserId) && // Exclude the current user being updated
+                (u.Phone == user.Phone)))
+            {
+                return "Phone number is already registered with us.";
+            }
+            return null;
+        }
+
+        public async Task<APIResponse<AddressModal>> CreateAddress(AddressModal addressData, int userId)
+        {
+            APIResponse<AddressModal> response = new APIResponse<AddressModal>();
+            try
+            {
+                // Check if the user already has an address
+                var existingUser = await _dbContext.Users.FindAsync(userId);
+                if (existingUser == null)
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "User not found.";
+                    return response;
+                }
+
+                if (existingUser.AddressId != null)
+                {
+                    response.ResponseCode = 400; // Bad Request
+                    response.ErrorMessage = "User already has an address registered.";
+                    return response;
+                }
+
+                Address data = _mapper.Map<AddressModal, Address>(addressData);
+                await _dbContext.Addresses.AddAsync(data);
+                await _dbContext.SaveChangesAsync();
+                int newAddressId = data.AddressId;
+
+                // Update the user's AddressId
+                existingUser.AddressId = newAddressId;
+                await _dbContext.SaveChangesAsync();
+
+                response.Data = _mapper.Map<Address, AddressModal>(data);
+                response.IsSuccess = true;
+                response.ResponseCode = 201; // Created
+            }
+            catch (DbUpdateException ex)
+            {
+                response.ResponseCode = 400; // Bad Request
+                response.ErrorMessage = "Failed to create the address. Please check the data provided.";
+            }
+            catch (Exception ex)
+            {
+                response.ResponseCode = 500; // Internal Server Error
+                response.ErrorMessage = ex.Message;
+            }
+            return response;
+        }
+
+
+        public async Task<APIResponse<AddressModal>> GetAddressByUserId(int userId)
+        {
+            APIResponse<AddressModal> response = new APIResponse<AddressModal>();
+            try
+            {
+                var user = await _dbContext.Users.FindAsync(userId);
+
+                if (user == null)
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "User not found";
+                }
+                else if (user.AddressId == null)
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "Address data not found for this user";
+                }
+                else
+                {
+                    var addressData = await _dbContext.Addresses.FindAsync(user.AddressId);
+                    if (addressData != null)
+                    {
+                        response.Data = _mapper.Map<Address, AddressModal>(addressData);
+                        response.IsSuccess = true;
+                        response.ResponseCode = 200;
+                    }
+                    else
+                    {
+                        response.ResponseCode = 404; // Not Found
+                        response.ErrorMessage = "Address data not found";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+        public async Task<APIResponse<AddressModal>> UpdateAddress(AddressModal addressData, int userId)
+        {
+            APIResponse<AddressModal> response = new APIResponse<AddressModal>();
+            try
+            {
+                // Find the address to be updated
+                var existingAddress = await _dbContext.Addresses.FindAsync(addressData.AddressId);
+                if (existingAddress == null)
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "Address not found.";
+                    return response;
+                }
+
+                // Update the address data
+                _mapper.Map(addressData, existingAddress);
+                await _dbContext.SaveChangesAsync();
+
+                response.Data = _mapper.Map<Address, AddressModal>(existingAddress);
+                response.IsSuccess = true;
+                response.ResponseCode = 200; // OK
+            }
+            catch (DbUpdateException ex)
+            {
+                response.ResponseCode = 400; // Bad Request
+                response.ErrorMessage = "Failed to update the address. Please check the data provided.";
+            }
+            catch (Exception ex)
+            {
+                response.ResponseCode = 500; // Internal Server Error
+                response.ErrorMessage = ex.Message;
+            }
+            return response;
+        }
+
     }
+
+
+
 }

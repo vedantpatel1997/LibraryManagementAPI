@@ -22,6 +22,7 @@ namespace LibraryManagement.API.Helper
 
             CreateMap<BookUpdateModal, Book>().ReverseMap();
             CreateMap<Category, CategoryModal>().ReverseMap();
+            CreateMap<Address, AddressModal>().ReverseMap();
 
             CreateMap<BookIssue, IssueDTO>()
                 .ForMember(dest => dest.Book, opt => opt.MapFrom(src => src.Book))

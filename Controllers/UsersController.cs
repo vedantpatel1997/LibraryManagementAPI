@@ -1,5 +1,6 @@
 ﻿using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Modal;
+using LibraryManagement.API.Repos.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -40,7 +41,7 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
 
-        [HttpPut("Update")]
+        [HttpPost("Update")]
         public async Task<IActionResult> Update(UserModal user, int id)
         {
             var data = await _usersSvc.Update(user, id);
@@ -51,6 +52,26 @@ namespace LibraryManagement.API.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var data = await _usersSvc.Remove(id);
+            return Ok(data);
+        }
+
+        [HttpPost("CreateAddress")]
+        public async Task<IActionResult> CreateAddress([FromBody] AddressModal addressData, int userId)
+        {
+            var data = await _usersSvc.CreateAddress(addressData, userId);
+            return Ok(data);
+        }
+        [HttpPost("UpdateAddress")]
+        public async Task<IActionResult> UpdateAddress([FromBody] AddressModal addressData, int userId)
+        {
+            var data = await _usersSvc.UpdateAddress(addressData, userId);
+            return Ok(data);
+        }
+
+        [HttpGet("GetAddressByUserId")]
+        public async Task<IActionResult> GetAddressByUserId(int userId)
+        {
+            var data = await _usersSvc.GetAddressByUserId(userId);
             return Ok(data);
         }
     }

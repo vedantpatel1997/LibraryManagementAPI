@@ -204,11 +204,20 @@ namespace LibraryManagement.API.Container.Implimentation
                             response.ErrorMessage = "Invalid Book.";
                             return response;
                         }
+                        
                         else if (user == null)
                         {
                             response.ResponseCode = 404; // Not Found
                             response.ErrorMessage = "Invalid User.";
                             return response;
+                        }
+                        else if (user.AddressId == null)
+                        {
+                            response.ResponseCode = 404; // Not Found
+                            string registrationLink = "/Books/User/Address";
+                            response.ErrorMessage = $"Please Register your <a href='{registrationLink}'>Address</a> first!";
+                            return response;
+
                         }
 
                         // Check if the book is already issued
