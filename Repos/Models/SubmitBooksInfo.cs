@@ -16,6 +16,9 @@ public partial class SubmitBooksInfo
     [Column("bookId")]
     public int BookId { get; set; }
 
+    [Column("bookTitle")]
+    public string BookTitle { get; set; } = null!;
+
     [Column("userId")]
     public int UserId { get; set; }
 
@@ -27,4 +30,9 @@ public partial class SubmitBooksInfo
 
     [Column("days")]
     public int Days { get; set; }
+
+    public static implicit operator SubmitBooksInfo(List<SubmitBooksInfo> v)
+    {
+        throw new NotImplementedException();
+    }
 }

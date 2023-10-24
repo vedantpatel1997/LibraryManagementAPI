@@ -54,9 +54,38 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-        public Task<APIResponse<List<IssueDTO>>> GetBooksHistoryByUserId(int bookId)
+        public async Task<APIResponse<List<SubmitBooksInfo>>> GetBooksHistoryByUserId(int userId)
         {
-            throw new NotImplementedException();
+            var response = new APIResponse<List<SubmitBooksInfo>>();
+            try
+            {
+                var user = await _dbContext.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    response.ResponseCode = 401;
+                    response.ErrorMessage = "User not found";
+                    return response;
+
+                }
+                var data = await _dbContext.SubmitBooksInfos.Where(i => i.UserId == userId).ToListAsync();
+                if (data != null)
+                {
+                    response.Data = data;
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200;
+                }
+                else
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "Data not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
         }
 
         public async Task<APIResponse<List<IssueDTO>>> GetUsersByBookId(int bookId)
@@ -209,7 +238,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             response.ErrorMessage = "Invalid Book.";
                             return response;
                         }
-                        
+
                         else if (user == null)
                         {
                             response.ResponseCode = 404; // Not Found
@@ -350,6 +379,7 @@ namespace LibraryManagement.API.Container.Implimentation
                         var submittedBook = new SubmitBooksInfo()
                         {
                             BookId = bookIssued.BookId,
+                            BookTitle = book.Title,
                             UserId = bookIssued.UserId,
                             IssueDate = bookIssued.IssueDate,
                             ReturnDate = DateTime.Now,

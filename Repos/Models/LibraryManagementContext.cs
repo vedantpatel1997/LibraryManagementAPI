@@ -31,22 +31,21 @@ public partial class LibraryManagementContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-  
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2AFBB8E98DDA");
+            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2AFB637699F4");
         });
 
         modelBuilder.Entity<AuthenticationRefreshToken>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Authenti__CB9A1CFFE630EFA2");
+            entity.HasKey(e => e.UserId).HasName("PK__Authenti__CB9A1CFFEAB7DAF6");
         });
 
         modelBuilder.Entity<Book>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C207B765DFB0");
+            entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C207F491B079");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Books)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -55,7 +54,7 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<BookIssue>(entity =>
         {
-            entity.HasKey(e => new { e.IssueId, e.BookId, e.UserId }).HasName("PK__BookIssu__424F92E81611D468");
+            entity.HasKey(e => new { e.IssueId, e.BookId, e.UserId }).HasName("PK__BookIssu__424F92E813F66BF6");
 
             entity.Property(e => e.IssueId).ValueGeneratedOnAdd();
 
@@ -70,7 +69,7 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => new { e.CartId, e.BookId, e.UserId }).HasName("PK__Cart__7F75535BD53A1CBB");
+            entity.HasKey(e => new { e.CartId, e.BookId, e.UserId }).HasName("PK__Cart__7F75535B81543015");
 
             entity.Property(e => e.CartId).ValueGeneratedOnAdd();
 
@@ -85,17 +84,17 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A0B1038333E");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A0BE0692D89");
         });
 
         modelBuilder.Entity<SubmitBooksInfo>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__SubmitBo__3213E83F447D9FAE");
+            entity.HasKey(e => e.Id).HasName("PK__SubmitBo__3213E83FF48DB316");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4CA7A1046A");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C59F59216");
 
             entity.Property(e => e.Role)
                 .HasDefaultValueSql("('User')")
