@@ -3,6 +3,7 @@ using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
+using LibraryManagement.API.Services.Interface;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
@@ -14,11 +15,13 @@ namespace LibraryManagement.API.Container.Implimentation
     {
         private readonly LibraryManagementContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly IEmailMessageService _emailMessageService;
 
-        public UsersService(LibraryManagementContext dbContext, IMapper mapper)
+        public UsersService(LibraryManagementContext dbContext, IMapper mapper, IEmailMessageService emailMessageService)
         {
-            this._dbContext = dbContext;
+            _dbContext = dbContext;
             _mapper = mapper;
+            _emailMessageService = emailMessageService;
         }
 
         public async Task<APIResponse<List<UserModal>>> GetAll()
@@ -56,6 +59,38 @@ namespace LibraryManagement.API.Container.Implimentation
                     User data = _mapper.Map<UserModal, User>(user);
                     await _dbContext.Users.AddAsync(data);
                     await _dbContext.SaveChangesAsync();
+                    string subject = "Welcome to the Library Management System - Your Registration Details";
+
+                    string bodyHtml = $@"
+                        <h2>Welcome to the Library Management System</h2>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
+                        <p>Congratulations! You have successfully registered for our Library Management System. Your account details are as follows:</p>
+
+                        <table>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td><span>{user.Email}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Username:</strong></td>
+                                <td><span>{user.Username}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password:</strong></td>
+                                <td><span>{user.Password}</span></td>
+                            </tr>
+                        </table>
+
+                        <p>Please keep your username and password secure and do not share them with anyone. You now have access to our extensive library collection, where you can borrow and reserve books, manage your account, and enjoy a variety of services.</p>
+
+                        <p>If you have any questions or require assistance, please don't hesitate to reach out to our library staff. We're here to help you make the most of your library experience.</p>
+
+                        <p>Thank you for choosing our Library Management System. We look forward to serving you!</p>
+
+                        <p>Sincerely,<br>Vedant Patel<br>Library Owner/Administrator</p>
+                    ";
+
+                    await _emailMessageService.SendMessage(data.Email, subject, bodyHtml);
 
                     response.Data = _mapper.Map<User, UserModal>(data);
                     response.IsSuccess = true;
@@ -125,6 +160,22 @@ namespace LibraryManagement.API.Container.Implimentation
                     // User has no pending books, proceed with deletion
                     _dbContext.Remove(user);
                     await _dbContext.SaveChangesAsync();
+                    string subject = "Account Deletion Confirmation";
+
+                    string bodyHtml = $@"
+                        <h2>Account Deletion Confirmation</h2>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
+                        <p>Your account in the Library Management System has been successfully deleted.</p>
+                        <p>If you did not initiate this deletion, please contact our support team immediately for assistance.</p>
+                        <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                        <br> <!-- Added space before closing remarks -->
+                        <p>We're sorry to see you go and hope you had a positive experience using our Library Management System.</p>
+                        <p>Sincerely,<br>Vedant Patel</p>
+                        <p>Library Owner/Administrator</p>
+                    ";
+
+                    await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+
                     response.IsSuccess = true;
                     response.ResponseCode = 204; // No Content (successful delete)
                 }
@@ -137,8 +188,6 @@ namespace LibraryManagement.API.Container.Implimentation
 
             return response;
         }
-
-
 
         public async Task<APIResponse> Update(UserModal user, int userId)
         {
@@ -167,6 +216,28 @@ namespace LibraryManagement.API.Container.Implimentation
                         existingUser.Phone = user.Phone;
 
                         await _dbContext.SaveChangesAsync();
+                        string subject = "User Information Update Confirmation";
+
+                        string bodyHtml = $@"
+                            <h2>User Information Update Confirmation</h2>
+                            <p>Dear {user.FirstName} {user.LastName},</p>
+                            <p>Your updated user details are as follows:</p>
+                            <ul>
+                                <li><strong>Username:</strong> {user.Username}</li>
+                                <li><strong>Email:</strong> {user.Email}</li>
+                                <li><strong>Phone Number:</strong> +1 {user.Phone}</li>
+                                <li><strong>Date of Birth:</strong> {user.Dob.ToString("MMMM dd, yyyy")}</li>
+                            </ul>
+                            <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                            <br> <!-- Added space before closing remarks -->
+                            <p>Thank you for using our Library Management System.</p>
+                            <p>Sincerely,<br>Vedant Patel</p>
+                            <p>Library Owner/Administrator</p>
+                            <br/>
+                            <br/>
+                        ";
+
+                        await _emailMessageService.SendMessage(existingUser.Email, subject, bodyHtml);
                         response.IsSuccess = true;
                         response.ResponseCode = 200;
                     }
@@ -254,7 +325,6 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
-
 
         public async Task<APIResponse<AddressModal>> GetAddressByUserId(int userId)
         {
@@ -358,6 +428,24 @@ namespace LibraryManagement.API.Container.Implimentation
 
                 // Save changes to the database
                 await _dbContext.SaveChangesAsync();
+                string subject = "Password Update Confirmation";
+
+                string bodyHtml = $@"
+                        <h2>Password Update Confirmation</h2>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
+                        <p>Your password for the Library Management System has been successfully updated.</p>
+                        <p>If you did not initiate this password change, please contact our support team immediately for assistance.</p>
+                        <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                        <br> <!-- Added space before contact information -->
+                        <p>Thank you for using our Library Management System.</p>
+                        <p>Sincerely,<br>Vedant Patel</p>
+                        <p>Library Owner/Administrator</p>
+                        <br>
+                        <br>
+                    ";
+
+                await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+
 
                 response.IsSuccess = true;
                 response.ResponseCode = 200; // OK
@@ -374,9 +462,6 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
-
-
-
     }
 
 

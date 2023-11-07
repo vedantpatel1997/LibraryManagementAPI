@@ -23,6 +23,7 @@ builder.Services.AddSwaggerGen();
 // Registering Services
 builder.Services.AddTransient<IBooksService, BooksService>();
 builder.Services.AddTransient<IUsersService, UsersService>();
+builder.Services.AddTransient<IEmailMessageService, EmailMessageService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthorize, Authorize>();
 builder.Services.AddTransient<IBooksUsersTransactions, BooksUsersTransactions>();

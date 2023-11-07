@@ -3,6 +3,7 @@ using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
+using LibraryManagement.API.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.API.Container.Implimentation
@@ -12,12 +13,14 @@ namespace LibraryManagement.API.Container.Implimentation
         private readonly LibraryManagementContext _dbContext;
         private readonly IBooksService _bookSvc;
         private readonly IMapper _mapper;
+        private readonly IEmailMessageService _emailMessageService;
 
-        public BooksUsersTransactions(LibraryManagementContext dbContext, IBooksService bookService, IMapper mapper)
+        public BooksUsersTransactions(LibraryManagementContext dbContext, IBooksService bookService, IMapper mapper, IEmailMessageService emailMessageService)
         {
             this._dbContext = dbContext;
             this._bookSvc = bookService;
             _mapper = mapper;
+            _emailMessageService = emailMessageService;
         }
         public async Task<APIResponse<List<IssueDTO>>> GetBooksByUserId(int userId)
         {
@@ -295,6 +298,8 @@ namespace LibraryManagement.API.Container.Implimentation
 
                             await _dbContext.BookIssues.AddAsync(bookIssue);
                             await _dbContext.SaveChangesAsync();
+
+
                         }
                         catch (Exception ex)
                         {
@@ -309,6 +314,56 @@ namespace LibraryManagement.API.Container.Implimentation
 
                     // Commit the transaction after the loop
                     transaction.Commit();
+
+                    if (issueDTOs.Count > 0)
+                    {
+                        var user = await _dbContext.Users.FindAsync(issueDTOs[0].UserId);
+                        string subject = "Books Issued Successfully";
+
+                        string bodyHtml = $@"
+                                <div style='max-width: 600px; margin: 0 left;'>
+                                    <h2>Books Issued Successfully</h2>
+                                    <p>Dear {user.FirstName} {user.LastName},</p>
+                                    <p>You have successfully issued the following books from the Library:</p>
+                                    <table style='font-size: 14px; color: #666; border-collapse: collapse; width: 100%; border: 1px solid #333; border-radius: 8px;'>
+                                        <tr>
+                                            <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Book Title</th>
+                                            <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Days</th>
+                                            <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Due Date</th>
+                                        </tr>
+                            ";
+
+                        foreach (var issueDTO in issueDTOs)
+                        {
+                            var book = await _dbContext.Books.FindAsync(issueDTO.BookId);
+                            var dueDate = DateTime.Today.AddDays(issueDTO.Days); // Calculate the due date
+
+                            bodyHtml += $@"
+                                <tr>
+                                    <td style='padding: 8px; border: 1px solid #333;'>{book?.Title}</td>
+                                    <td style='padding: 8px; border: 1px solid #333;'>{issueDTO.Days}</td>
+                                    <td style='padding: 8px; border: 1px solid #333;'>{dueDate.ToString("D")}</td>
+                                ";
+                        }
+
+                        bodyHtml += @"
+                                </table>
+                                <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                                <br> <!-- Added space before the closing remarks -->
+                                <p><strong>Important Note:</strong></p>
+                                <p>If any of the issued books are submitted after the due date, a penalty may be applied as per our Library Policy. Please ensure timely return to avoid any additional charges.</p>
+                                <br> <!-- Added space before the closing remarks -->
+                                <p>Thank you for using our Library Management System.</p>
+                                <p style='text-align: left;'>Sincerely,<br>Vedant Patel</p>
+                                <p style='text-align: left;'>Library Owner/Administrator</p>
+                                <br/>
+                                <br/>
+                            </div>
+                        ";
+                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+                    }
+
+
 
                     response.IsSuccess = true;
                     response.ResponseCode = 200; // OK
@@ -391,6 +446,43 @@ namespace LibraryManagement.API.Container.Implimentation
 
 
                         await _dbContext.SaveChangesAsync();
+
+                        string subject = "Book Submission Confirmation";
+
+                        var issueDate = submittedBook?.IssueDate ?? DateTime.Now; // Use the issue date from the book record or current date as fallback
+                        var dueDate = issueDate.AddDays(submittedBook.Days); // Calculate the due date
+                        var submissionDate = DateTime.Now; // Get the current date and time of submission
+
+                        string bodyHtml = $@"
+                            <div style='max-width: 600px; margin: 0 left;'>
+                                <h2 style='text-align: left;'>Book Submission Confirmation</h2>
+                                <p>Dear {user.FirstName} {user.LastName},</p>
+                                <p>You have successfully submitted the following book to the Library:</p>
+                                <table style='font-size: 14px; color: #666; border-collapse: collapse; width: 100%; border: 1px solid #333; border-radius: 8px;'>
+                                    <tr>
+                                        <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Book Title</th>
+                                        <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Due Date</th>
+                                        <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Submitted Date</th>
+                                        <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Submit on Time</th>
+                                    </tr>
+                                    <tr>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{book.Title}</td>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{dueDate.ToString("D")}</td>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{submissionDate.ToString("D")}</td>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{(submissionDate <= dueDate ? "Yes" : "No")}</td>
+                                    </tr>
+                                </table>
+                                <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                                <br> <!-- Added space before the closing remarks -->
+                                <p>Thank you for using our Library Management System.</p>
+                                <p style='text-align: left;'>Sincerely,<br>Vedant Patel</p>
+                                <p style='text-align: left;'>Library Owner/Administrator</p>
+                                <br/>
+                                <br/>
+                            </div>
+                        ";
+                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
 
                         // Commit the transaction
                         transaction.Commit();
