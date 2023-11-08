@@ -482,8 +482,6 @@ namespace LibraryManagement.API.Container.Implimentation
                             </div>
                         ";
                         await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
-                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
-
                         // Commit the transaction
                         transaction.Commit();
 
