@@ -54,5 +54,12 @@ namespace LibraryManagement.API.Controllers
             var data = await _bUTransactionSvs.GetBooksHistoryByUserId(userId);
             return Ok(data);
         }
+
+        [HttpGet("SendReminderForPendingBooks")]
+        public async Task<IActionResult> SendReminderForPendingBooks(int userId)
+        {
+            var data = await _bUTransactionSvs.SendReminderForPendingBooks(userId);
+            return Ok(data);
+        }
     }
 }

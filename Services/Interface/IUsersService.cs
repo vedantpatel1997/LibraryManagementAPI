@@ -14,5 +14,7 @@ namespace LibraryManagement.API.Container.Service
         Task<APIResponse<AddressModal>> CreateAddress(AddressModal addressData, int userId);
         Task<APIResponse<AddressModal>> UpdateAddress(AddressModal addressData, int userId);
         Task<APIResponse<AddressModal>> GetAddressByUserId(int userId);
+        Task<APIResponse> sendPersonalInfo(int userId);
+        Task<APIResponse> SendResetPassword(int userId);
     }
 }

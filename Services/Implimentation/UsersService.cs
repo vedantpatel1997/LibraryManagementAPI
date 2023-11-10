@@ -29,7 +29,7 @@ namespace LibraryManagement.API.Container.Implimentation
             APIResponse<List<UserModal>> response = new APIResponse<List<UserModal>>();
             try
             {
-                var data = await _dbContext.Users.ToListAsync();
+                var data = await _dbContext.Users.Where(x => x.Role != "Admin").ToListAsync();
                 response.Data = _mapper.Map<List<User>, List<UserModal>>(data);
                 response.IsSuccess = true;
                 response.ResponseCode = 200;
@@ -462,8 +462,135 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+
+        public async Task<APIResponse> sendPersonalInfo(int userId)
+        {
+            APIResponse response = new APIResponse();
+            try
+            {
+                var user = await _dbContext.Users
+                    .Include(u => u.Address) // Include the Address navigation property
+                    .FirstOrDefaultAsync(i => i.UserId == userId);
+
+                if (user != null)
+                {
+                    string userEmail = user.Email; // Replace with the actual admin's email
+                    string subject = $@"{user.FirstName} Personal Information";
+
+                    string addressInfo = user.Address != null
+                        ? $"<li><strong>Address:</strong> {user.Address.AddressLine1}, {user.Address.AddressLine2}, {user.Address.City}, {user.Address.Province}, {user.Address.Country}, {user.Address.Postalcode}</li>"
+                        : "<li><strong>Address:</strong> Not registered</li>";
+
+                    string bodyHtml = $@"
+                <h2>Your Personal Information</h2>
+                <p>Dear {user.FirstName} {user.LastName},</p>
+                <p>Your user details are as follows:</p>
+                <ul>
+                    <li><strong>Username:</strong> {user.Username}</li>
+                    <li><strong>FirstName:</strong> {user.FirstName}</li>
+                    <li><strong>LastName:</strong> {user.LastName}</li>
+                    <li><strong>Email:</strong> {user.Email}</li>
+                    <li><strong>Phone Number:</strong> +1 {user.Phone}</li>
+                    <li><strong>Date of Birth:</strong> {user.Dob.ToString("MMMM dd, yyyy")}</li>
+                    <li><strong>Gender:</strong> {user.Gender}</li>
+                    {addressInfo}
+                </ul>
+                <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                <br> <!-- Added space before closing remarks -->
+                <p>Thank you for using our Library Management System.</p>
+                <p>Sincerely,<br>Your Library Administrator</p>
+                <br/>
+                <br/>
+            ";
+
+                    await _emailMessageService.SendMessage(userEmail, subject, bodyHtml);
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200;
+                }
+                else
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "User data not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+
+
+        public async Task<APIResponse> SendResetPassword(int userId)
+        {
+            APIResponse response = new APIResponse();
+            using (var transaction = await _dbContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var user = await _dbContext.Users.FirstOrDefaultAsync(i => i.UserId == userId);
+
+                    if (user != null)
+                    {
+                        // Generate a random 9-character password
+                        string newPassword = GenerateRandomPassword(9);
+
+                        // Update the user's password in the database
+                        user.Password = newPassword;
+                        await _dbContext.SaveChangesAsync();
+
+                        // Send an email with the new password
+                        string subject = "Password Reset Confirmation";
+                        string bodyHtml = $@"
+                    <h2>Password Reset Confirmation</h2>
+                    <p>Dear {user.FirstName} {user.LastName},</p>
+                    <p>Your password has been reset. Please use the following temporary password to log in:</p>
+                    <p><strong>New Temporary Password:</strong> {newPassword}</p>
+                    <p>We recommend changing your password after logging in for security reasons.</p>
+                    <br> <!-- Added space before closing remarks -->
+                    <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                    <p>Thank you for using our Library Management System.</p>
+                    <p>Sincerely,<br>Your Library Administrator</p>
+                    <br/>
+                    <br/>
+                ";
+
+                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+
+                        // If everything is successful, commit the transaction
+                        await transaction.CommitAsync();
+
+                        response.IsSuccess = true;
+                        response.ResponseCode = 200;
+                    }
+                    else
+                    {
+                        response.ResponseCode = 404; // Not Found
+                        response.ErrorMessage = "User data not found";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // If an exception occurs, rollback the transaction
+                    await transaction.RollbackAsync();
+
+                    response.ErrorMessage = ex.Message;
+                    response.ResponseCode = 500; // Internal Server Error
+                }
+            }
+            return response;
+        }
+
+        // Helper method to generate a random password
+        private string GenerateRandomPassword(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
     }
-
-
 
 }

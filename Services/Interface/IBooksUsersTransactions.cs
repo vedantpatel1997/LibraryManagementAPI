@@ -12,5 +12,7 @@ namespace LibraryManagement.API.Container.Service
         Task<APIResponse> IssueBook(IssueDTO issueDTO);
         Task<APIResponse> IssueBooks(List<IssueDTO> issueDTO);
         Task<APIResponse> SubmitBook(SubmitDTO SubmitDTO);
+        Task<APIResponse> SendReminderForPendingBooks(int userId);
+
     }
 }

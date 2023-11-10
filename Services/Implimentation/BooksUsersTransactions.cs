@@ -378,6 +378,83 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
+        public async Task<APIResponse> SendReminderForPendingBooks(int userId)
+        {
+            APIResponse response = new APIResponse();
+            using (var transaction = _dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    // Retrieve the user's issued books
+                    var issuedBooks = await _dbContext.BookIssues
+                        .Include(x => x.Book)
+                        .Where(x => x.UserId == userId)
+                        .ToListAsync();
+
+                    if (issuedBooks.Count > 0)
+                    {
+                        var user = await _dbContext.Users.FindAsync(userId);
+                        string subject = "Library Book Return Reminder";
+
+                        string bodyHtml = $@"
+                    <div style='max-width: 600px; margin: 0 left;'>
+                        <h2>Library Book Return Reminder</h2>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
+                        <p>This is a friendly reminder about the following books currently issued from the Library:</p>
+                        <table style='font-size: 14px; color: #666; border-collapse: collapse; width: 100%; border: 1px solid #333; border-radius: 8px;'>
+                            <tr>
+                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Book Title</th>
+                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Due Date</th>
+                            </tr>
+                ";
+
+                        foreach (var issuedBook in issuedBooks)
+                        {
+                            var dueDate = issuedBook.IssueDate.AddDays(issuedBook.Days); // Calculate the due date
+
+                            bodyHtml += $@"
+                        <tr>
+                            <td style='padding: 8px; border: 1px solid #333;'>{issuedBook.Book?.Title}</td>
+                            <td style='padding: 8px; border: 1px solid #333;'>{dueDate.ToString("D")}</td>
+                        ";
+                        }
+
+                        bodyHtml += @"
+                        </table>
+                        <p>Please ensure to return these books by the due date to avoid any late fees or penalties.</p>
+                        <p>If you have already returned these books, kindly disregard this reminder.</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>Thank you for using our Library Management System.</p>
+                        <p style='text-align: left;'>Sincerely,<br>Vedant Patel</p>
+                        <p style='text-align: left;'>Library Owner/Administrator</p>
+                        <br/>
+                        <br/>
+                    </div>
+                ";
+                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+                    }
+
+                    // Commit the transaction after sending reminders
+                    transaction.Commit();
+
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200; // OK
+                }
+                catch (Exception ex)
+                {
+                    // Rollback the transaction in case of an error
+                    await transaction.RollbackAsync();
+
+                    response.ErrorMessage = ex.Message;
+                    response.ResponseCode = 500; // Internal Server Error
+                }
+            }
+
+            return response;
+        }
+
 
         public async Task<APIResponse> SubmitBook(SubmitDTO SubmitDTO)
         {
