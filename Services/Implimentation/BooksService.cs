@@ -43,6 +43,8 @@ namespace LibraryManagement.API.Container.Implimentation
             try
             {
                 var data = _mapper.Map<BookUpdateModal, Book>(book);
+                data.AvailableQuantity = data.TotalQuantity;
+
                 await _dbContext.AddAsync(data);
                 await _dbContext.SaveChangesAsync();
 
@@ -113,7 +115,6 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-
         public async Task<APIResponse> Remove(int bookId)
         {
             var response = new APIResponse();
@@ -157,8 +158,6 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-
-
         public async Task<APIResponse> Update(BookUpdateModal book, int bookId)
         {
             var response = new APIResponse();
@@ -167,7 +166,19 @@ namespace LibraryManagement.API.Container.Implimentation
                 var existingBook = await _dbContext.Books.FirstOrDefaultAsync(i => i.BookId == bookId);
                 if (existingBook != null)
                 {
-                    _mapper.Map(book, existingBook);
+                    if (existingBook.IssuedQuantity > book.TotalQuantity)
+                    {
+                        response.ResponseCode = 404;
+                        response.ErrorMessage = "Total quantity can not be less than issued quantity";
+                        return response;
+                    }
+                    existingBook.Title = book.Title;
+                    existingBook.Author = book.Author;
+                    existingBook.TotalQuantity = book.TotalQuantity;
+                    existingBook.AvailableQuantity = existingBook.TotalQuantity - existingBook.IssuedQuantity;
+                    existingBook.Price = book.Price;
+                    existingBook.CategoryId = book.CategoryId;
+                    existingBook.ImageUrl = book.ImageURL;
                     await _dbContext.SaveChangesAsync();
                     response.IsSuccess = true;
                     response.ResponseCode = 200;

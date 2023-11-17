@@ -51,7 +51,7 @@ namespace LibraryManagement.API.Controllers
         }
 
 
-        [HttpPut("Update")]
+        [HttpPost("Update")]
         public async Task<IActionResult> Update(BookUpdateModal book, int id)
         {
             var data = await _booksSvc.Update(book, id);

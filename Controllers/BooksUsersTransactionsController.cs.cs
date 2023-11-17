@@ -53,6 +53,12 @@ namespace LibraryManagement.API.Controllers
         {
             var data = await _bUTransactionSvs.GetBooksHistoryByUserId(userId);
             return Ok(data);
+        } 
+        [HttpGet("GetUsersHistoryByBookId")]
+        public async Task<IActionResult> GetUsersHistoryByBookId(int bookId)
+        {
+            var data = await _bUTransactionSvs.GetUsersHistoryByBookId(bookId);
+            return Ok(data);
         }
 
         [HttpGet("SendReminderForPendingBooks")]
@@ -61,5 +67,13 @@ namespace LibraryManagement.API.Controllers
             var data = await _bUTransactionSvs.SendReminderForPendingBooks(userId);
             return Ok(data);
         }
+        
+        [HttpGet("SendReminderForPendingBook")]
+        public async Task<IActionResult> SendReminderForPendingBook(int userId, int bookId)
+        {
+            var data = await _bUTransactionSvs.SendReminderForPendingBook(userId, bookId);
+            return Ok(data);
+        }
+       
     }
 }

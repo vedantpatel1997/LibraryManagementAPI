@@ -23,6 +23,9 @@ public partial class Book
 
     public int Price { get; set; }
 
+    [Column("ImageURL")]
+    public string ImageUrl { get; set; } = null!;
+
     public int CategoryId { get; set; }
 
     [InverseProperty("Book")]

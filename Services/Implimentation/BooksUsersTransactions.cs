@@ -78,6 +78,48 @@ namespace LibraryManagement.API.Container.Implimentation
                     response.ResponseCode = 200;
                 }
                 else
+                {   
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "Data not found";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+
+        public async Task<APIResponse<List<HistoryModal>>> GetUsersHistoryByBookId(int bookId)
+        {
+            var response = new APIResponse<List<HistoryModal>>();
+            try
+            {
+                var book = await _dbContext.Books.FindAsync(bookId);
+                if (book == null)
+                {
+                    response.ResponseCode = 401;
+                    response.ErrorMessage = "Book not found";
+                    return response;
+                }
+
+                var data = await _dbContext.SubmitBooksInfos.Where(i => i.BookId == bookId).OrderBy(x=>x.IssueDate).ToListAsync();
+
+                if (data != null )
+                {
+                    var history = _mapper.Map<List<SubmitBooksInfo>, List<HistoryModal>>(data);
+                    foreach(var item in history)
+                    {
+                        var userTemp = await _dbContext.Users.FindAsync(item.UserId);
+                        item.Book = _mapper.Map<Book, BookModal>(book);
+                        item.User = _mapper.Map<User, UserModal>(userTemp);
+                    }
+                    response.Data = history;
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200;
+                }
+                else
                 {
                     response.ResponseCode = 404; // Not Found
                     response.ErrorMessage = "Data not found";
@@ -90,6 +132,7 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+
 
         public async Task<APIResponse<List<IssueDTO>>> GetUsersByBookId(int bookId)
         {
@@ -108,7 +151,6 @@ namespace LibraryManagement.API.Container.Implimentation
                 // Query the database to get users who have issued the book with the specified bookId
                 var issuedToUsers = await _dbContext.BookIssues
                     .Include(x => x.User)
-                    .Include(x => x.Book)
                     .Include(x => x.Book.Category)
                     .Where(x => x.BookId == bookId)
                     .ToListAsync();
@@ -125,7 +167,6 @@ namespace LibraryManagement.API.Container.Implimentation
 
             return response;
         }
-
 
         public async Task<APIResponse> IssueBook(IssueDTO issueDTO)
         {
@@ -219,7 +260,6 @@ namespace LibraryManagement.API.Container.Implimentation
 
             return response;
         }
-
 
         public async Task<APIResponse> IssueBooks(List<IssueDTO> issueDTOs)
         {
@@ -455,6 +495,57 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
+        public async Task<APIResponse> SendTemp(int userId)
+        {
+            APIResponse response = new APIResponse();
+            using (var transaction = _dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    // Retrieve user information
+                    var user = await _dbContext.Users.FindAsync(userId);
+                    string subject = "Hello Darling ";
+
+                    for (int i = 0; i < 50; i++)
+                    {
+                        // Compose the email body with the custom message
+                        string bodyHtml = $@"
+                    <div style='max-width: 600px; margin: 0 left;'>
+                        <h2>Hello Darling Reminder</h2>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
+                        <p>{i + 1}. Hello darling!</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>Thank you for being part of our community.</p>
+                        <p style='text-align: left;'>Sincerely,<br>Your Name</p>
+                        <br/>
+                        <br/>
+                    </div>
+                ";
+
+                        // Send the email
+                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+                    }
+
+                    // Commit the transaction after sending reminders
+                    transaction.Commit();
+
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200; // OK
+                }
+                catch (Exception ex)
+                {
+                    // Rollback the transaction in case of an error
+                    await transaction.RollbackAsync();
+
+                    response.ErrorMessage = ex.Message;
+                    response.ResponseCode = 500; // Internal Server Error
+                }
+            }
+
+            return response;
+        }
 
         public async Task<APIResponse> SubmitBook(SubmitDTO SubmitDTO)
         {
@@ -583,5 +674,82 @@ namespace LibraryManagement.API.Container.Implimentation
 
             return response;
         }
+
+        public async Task<APIResponse> SendReminderForPendingBook(int userId, int bookId)
+        {
+            APIResponse response = new APIResponse();
+
+            using (var transaction = _dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    // Retrieve the user's issued book with the specified bookId
+                    var issuedBook = await _dbContext.BookIssues
+                        .Include(x => x.Book)
+                        .FirstOrDefaultAsync(x => x.UserId == userId && x.BookId == bookId);
+
+                    if (issuedBook != null)
+                    {
+                        var user = await _dbContext.Users.FindAsync(userId);
+                        string subject = "Library Book Return Reminder";
+
+                        // Calculate the due date for the specific book
+                        var dueDate = issuedBook.IssueDate.AddDays(issuedBook.Days);
+
+                        string bodyHtml = $@"
+                    <div style='max-width: 600px; margin: 0 left;'>
+                        <h2>Library Book Return Reminder</h2>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
+                        <p>This is a friendly reminder about the book currently issued from the Library:</p>
+                        <table style='font-size: 14px; color: #666; border-collapse: collapse; width: 100%; border: 1px solid #333; border-radius: 8px;'>
+                            <tr>
+                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Book Title</th>
+                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Due Date</th>
+                            </tr>
+                            <tr>
+                                <td style='padding: 8px; border: 1px solid #333;'>{issuedBook.Book?.Title}</td>
+                                <td style='padding: 8px; border: 1px solid #333;'>{dueDate.ToString("D")}</td>
+                            </tr>
+                        </table>
+                        <p>Please ensure to return this book by the due date to avoid any late fees or penalties.</p>
+                        <p>If you have already returned this book, kindly disregard this reminder.</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>Thank you for using our Library Management System.</p>
+                        <p style='text-align: left;'>Sincerely,<br>Vedant Patel</p>
+                        <p style='text-align: left;'>Library Owner/Administrator</p>
+                        <br/>
+                        <br/>
+                    </div>
+                ";
+
+                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+
+                        // Commit the transaction after sending the reminder
+                        transaction.Commit();
+
+                        response.IsSuccess = true;
+                        response.ResponseCode = 200; // OK
+                    }
+                    else
+                    {
+                        response.ResponseCode = 404; // Not Found
+                        response.ErrorMessage = "Book not found or not issued to the user.";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Rollback the transaction in case of an error
+                    await transaction.RollbackAsync();
+
+                    response.ErrorMessage = ex.Message;
+                    response.ResponseCode = 500; // Internal Server Error
+                }
+            }
+
+            return response;
+        }
+
     }
 }

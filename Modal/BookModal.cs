@@ -10,6 +10,7 @@ namespace LibraryManagement.API.Modal
         public string Title { get; set; } = null!;
 
         public string Author { get; set; } = null!;
+        public string ImageURL { get; set; } = null!;
 
         public int TotalQuantity { get; set; }
 

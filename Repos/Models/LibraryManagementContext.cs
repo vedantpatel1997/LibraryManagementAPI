@@ -31,21 +31,25 @@ public partial class LibraryManagementContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Data Source=localhost\\SQLEXPRESS22;Initial Catalog=LibraryManagement;User ID=sa;Password=Vedant@1997;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2AFB637699F4");
+            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2AFBC955B458");
         });
 
         modelBuilder.Entity<AuthenticationRefreshToken>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Authenti__CB9A1CFFEAB7DAF6");
+            entity.HasKey(e => e.UserId).HasName("PK__Authenti__CB9A1CFFE54137F7");
         });
 
         modelBuilder.Entity<Book>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C207F491B079");
+            entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C20762C78C56");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Books)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -54,7 +58,7 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<BookIssue>(entity =>
         {
-            entity.HasKey(e => new { e.IssueId, e.BookId, e.UserId }).HasName("PK__BookIssu__424F92E813F66BF6");
+            entity.HasKey(e => new { e.IssueId, e.BookId, e.UserId }).HasName("PK__BookIssu__424F92E882B51C49");
 
             entity.Property(e => e.IssueId).ValueGeneratedOnAdd();
 
@@ -69,7 +73,7 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => new { e.CartId, e.BookId, e.UserId }).HasName("PK__Cart__7F75535B81543015");
+            entity.HasKey(e => new { e.CartId, e.BookId, e.UserId }).HasName("PK__Cart__7F75535BB093B44F");
 
             entity.Property(e => e.CartId).ValueGeneratedOnAdd();
 
@@ -84,17 +88,17 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A0BE0692D89");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A0B55CC2DC5");
         });
 
         modelBuilder.Entity<SubmitBooksInfo>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__SubmitBo__3213E83FF48DB316");
+            entity.HasKey(e => e.Id).HasName("PK__SubmitBo__3213E83F29F4CBD5");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C59F59216");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4CFF2E285C");
 
             entity.Property(e => e.Role)
                 .HasDefaultValueSql("('User')")

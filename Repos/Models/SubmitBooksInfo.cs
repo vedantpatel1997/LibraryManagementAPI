@@ -30,9 +30,4 @@ public partial class SubmitBooksInfo
 
     [Column("days")]
     public int Days { get; set; }
-
-    public static implicit operator SubmitBooksInfo(List<SubmitBooksInfo> v)
-    {
-        throw new NotImplementedException();
-    }
 }

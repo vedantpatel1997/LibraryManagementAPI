@@ -270,12 +270,12 @@ namespace LibraryManagement.API.Container.Implimentation
             {
                 return "Email already exists.";
             }
-            if (await _dbContext.Users.AnyAsync(u =>
-                (u.UserId != user.UserId) && // Exclude the current user being updated
-                (u.Phone == user.Phone)))
-            {
-                return "Phone number is already registered with us.";
-            }
+            //if (await _dbContext.Users.AnyAsync(u =>
+            //    (u.UserId != user.UserId) && // Exclude the current user being updated
+            //    (u.Phone == user.Phone)))
+            //{
+            //    return "Phone number is already registered with us.";
+            //}
             return null;
         }
 

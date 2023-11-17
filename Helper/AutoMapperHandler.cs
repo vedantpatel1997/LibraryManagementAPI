@@ -27,6 +27,8 @@ namespace LibraryManagement.API.Helper
             CreateMap<BookIssue, IssueDTO>()
                 .ForMember(dest => dest.Book, opt => opt.MapFrom(src => src.Book))
                 .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
+
+            CreateMap<SubmitBooksInfo, HistoryModal>();
         }
     }
 }
