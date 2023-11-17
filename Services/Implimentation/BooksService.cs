@@ -19,13 +19,40 @@ namespace LibraryManagement.API.Container.Implimentation
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
+        public LibraryManagementContext Get_dbContext()
+        {
+            return _dbContext;
+        }
+
         public async Task<APIResponse<List<BookModal>>> GetAll()
         {
             var response = new APIResponse<List<BookModal>>();
+            var sellingCount = 10;
             try
             {
                 var data = await _dbContext.Books.Include(book => book.Category).ToListAsync();
-                response.Data = _mapper.Map<List<Book>, List<BookModal>>(data);
+                var bookModalData = _mapper.Map<List<Book>, List<BookModal>>(data);
+
+                foreach (var book in bookModalData)
+                {
+                    var rentalSubmittedCount = await _dbContext.SubmitBooksInfos
+                        .Where(x => x.BookId == book.BookId)
+                        .CountAsync();
+
+                    var rentalIssuedCount = await _dbContext.BookIssues
+                        .Where(x => x.BookId == book.BookId)
+                        .CountAsync();
+
+                    var bestSellerCount = rentalIssuedCount + rentalSubmittedCount;
+                    if (bestSellerCount >= sellingCount)
+                    {
+                        book.IsBestSeller = true;
+                    }
+                    else { book.IsBestSeller = false; }
+                    Console.WriteLine($"{book.Title} : SellingCount {bestSellerCount}");
+                }
+
+                response.Data = bookModalData;
                 response.IsSuccess = true;
                 response.ResponseCode = 200;
             }
@@ -36,6 +63,7 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+
 
         public async Task<APIResponse<BookUpdateModal>> Create(BookUpdateModal book)
         {

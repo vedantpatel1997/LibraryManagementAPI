@@ -2,7 +2,7 @@
 {
     public class BookUpdateModal
     {
-        public int BookId { get; set; }
+        public int? BookId { get; set; }
 
         public string Title { get; set; } = null!;
 

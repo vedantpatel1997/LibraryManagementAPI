@@ -20,6 +20,7 @@ namespace LibraryManagement.API.Modal
 
         public int Price { get; set; }
         public int CategoryId { get; set; }
+        public bool? IsBestSeller { get; set; }
 
         public CategoryModal Category{ get; set; }
     }
