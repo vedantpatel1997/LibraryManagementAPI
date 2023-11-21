@@ -39,40 +39,40 @@ public partial class LibraryManagementContext : DbContext
     {
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2AFB0165DA66");
+            entity.HasKey(e => e.AddressId).HasName("PK__Address__091C2AFBF21A4C0B");
         });
 
         modelBuilder.Entity<AuthenticationRefreshToken>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Authenti__CB9A1CFF5D887F14");
+            entity.HasKey(e => e.UserId).HasName("PK__Authenti__CB9A1CFFB2A66B38");
         });
 
         modelBuilder.Entity<BillingBooksInfo>(entity =>
         {
-            entity.HasKey(e => e.BillingBookInfoId).HasName("PK__BillingB__10F5F5FDF21CA7C4");
+            entity.HasKey(e => e.BillingBookInfoId).HasName("PK__BillingB__10F5F5FDB6EE0DCB");
 
             entity.Property(e => e.BookCategory).IsFixedLength();
 
             entity.HasOne(d => d.Billing).WithMany(p => p.BillingBooksInfos)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BillingBo__billi__693CA210");
+                .HasConstraintName("FK_BillingSummary");
         });
 
         modelBuilder.Entity<BillingSummary>(entity =>
         {
-            entity.HasKey(e => e.BillingId).HasName("PK__BillingS__39667D67391D3D5A");
+            entity.HasKey(e => e.BillingId).HasName("PK__BillingS__39667D6716084144");
 
             entity.Property(e => e.Delivery).HasDefaultValueSql("((0))");
             entity.Property(e => e.Pickup).HasDefaultValueSql("((0))");
 
             entity.HasOne(d => d.Address).WithMany(p => p.BillingSummaries)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__BillingSu__addre__6A30C649");
+                .HasConstraintName("FK_Address");
         });
 
         modelBuilder.Entity<Book>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C2072DD4FCD8");
+            entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C207027E2382");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Books)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -81,7 +81,7 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<BookIssue>(entity =>
         {
-            entity.HasKey(e => new { e.IssueId, e.BookId, e.UserId }).HasName("PK__BookIssu__424F92E8AF38B2E7");
+            entity.HasKey(e => new { e.IssueId, e.BookId, e.UserId }).HasName("PK__BookIssu__424F92E8E071B0EE");
 
             entity.Property(e => e.IssueId).ValueGeneratedOnAdd();
 
@@ -96,7 +96,7 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => new { e.CartId, e.BookId, e.UserId }).HasName("PK__Cart__7F75535B4B1BBC30");
+            entity.HasKey(e => new { e.CartId, e.BookId, e.UserId }).HasName("PK__Cart__7F75535B509D3A72");
 
             entity.Property(e => e.CartId).ValueGeneratedOnAdd();
 
@@ -111,17 +111,17 @@ public partial class LibraryManagementContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A0B66C059B6");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Category__19093A0BEC665823");
         });
 
         modelBuilder.Entity<SubmitBooksInfo>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__SubmitBo__3213E83F99CBACC4");
+            entity.HasKey(e => e.Id).HasName("PK__SubmitBo__3213E83F56CBB0BD");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C17CE30C0");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C0D9A0B05");
 
             entity.Property(e => e.Role)
                 .HasDefaultValueSql("('User')")

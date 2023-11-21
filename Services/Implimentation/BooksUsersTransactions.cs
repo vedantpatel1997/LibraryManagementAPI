@@ -804,6 +804,61 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
+        public async Task<APIResponse<List<BillingSummaryModal>>> GetBillsByUserID(int userId)
+        {
 
+            var response = new APIResponse<List<BillingSummaryModal>>();
+
+            try
+            {
+                var user = await _dbContext.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    response.ResponseCode = 404;
+                    response.ErrorMessage = "User not found";
+                    return response;
+                }
+
+                var billingSummary = await _dbContext.BillingSummaries.Include(x => x.BillingBooksInfos).Include(x => x.Address).Where(x => x.UserId == userId).ToListAsync();
+
+
+                response.Data = _mapper.Map<List<BillingSummary>, List<BillingSummaryModal>>(billingSummary); ;
+                response.IsSuccess = true;
+                response.ResponseCode = 200; // OK
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+
+            return response;
+        }
+
+        public async Task<APIResponse<BillingSummaryModal>> GetBillByBillID(int billId)
+        {
+
+            var response = new APIResponse<BillingSummaryModal>();
+            try
+            {
+                var bill = await _dbContext.BillingSummaries.Include(x => x.BillingBooksInfos).Include(x => x.Address).FirstOrDefaultAsync(x => x.BillingId == billId);
+
+                if (bill == null)
+                {
+                    response.ResponseCode = 404;
+                    response.ErrorMessage = "Bill not found";
+                    return response;
+                }
+                response.Data = _mapper.Map<BillingSummary, BillingSummaryModal>(bill); 
+                response.IsSuccess = true;
+                response.ResponseCode = 200; // OK
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
     }
 }

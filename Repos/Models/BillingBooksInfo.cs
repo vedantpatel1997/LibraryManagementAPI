@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.API.Repos.Models;
@@ -42,6 +43,7 @@ public partial class BillingBooksInfo
     [Column("billingId")]
     public int BillingId { get; set; }
 
+    [JsonIgnore]
     [ForeignKey("BillingId")]
     [InverseProperty("BillingBooksInfos")]
     public virtual BillingSummary Billing { get; set; } = null!;

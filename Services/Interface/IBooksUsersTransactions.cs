@@ -17,6 +17,8 @@ namespace LibraryManagement.API.Container.Service
         Task<APIResponse> SendReminderForPendingBook(int userId, int bookId);
         Task<APIResponse> SendTemp(int userId);
         Task<APIResponse> GenerateBill(BillingSummaryModal billingSummary, List<BillingBooksInfoModal> booksInfo);
+        Task<APIResponse<List<BillingSummaryModal>>> GetBillsByUserID(int userId);
+        Task<APIResponse<BillingSummaryModal>> GetBillByBillID(int billId);
 
     }
 }

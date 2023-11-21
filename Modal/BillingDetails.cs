@@ -1,6 +1,6 @@
 ﻿namespace LibraryManagement.API.Modal
 {
-    public class GenerateBillRequest
+    public class BillingDetails
     {
         public BillingSummaryModal BillingSummary { get; set; }
         public List<BillingBooksInfoModal> BillingBooksInfo { get; set; }

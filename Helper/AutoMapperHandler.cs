@@ -22,7 +22,10 @@ namespace LibraryManagement.API.Helper
                 .ReverseMap();
 
             CreateMap<BookUpdateModal, Book>().ReverseMap();
-            CreateMap<Category, CategoryModal>().ReverseMap();
+            CreateMap<Category, CategoryModal>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name.Trim()))
+                .ReverseMap();
+
             CreateMap<Address, AddressModal>().ReverseMap();
 
             CreateMap<BookIssue, IssueDTO>()
@@ -32,7 +35,9 @@ namespace LibraryManagement.API.Helper
             CreateMap<SubmitBooksInfo, HistoryModal>();
             CreateMap<BillingSummary, BillingSummaryModal>().ReverseMap();
 
-            CreateMap<BillingBooksInfo, BillingBooksInfoModal>().ReverseMap();
+            CreateMap<BillingBooksInfo, BillingBooksInfoModal>()
+                .ForMember(dest => dest.BookCategory, opt => opt.MapFrom(src => src.BookCategory.Trim()))
+                .ReverseMap();
         }
     }
 }

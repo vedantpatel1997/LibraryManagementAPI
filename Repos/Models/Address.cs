@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.API.Repos.Models;
@@ -29,9 +30,11 @@ public partial class Address
 
     public string? AddressLine2 { get; set; }
 
+    [JsonIgnore]
     [InverseProperty("Address")]
     public virtual ICollection<BillingSummary> BillingSummaries { get; set; } = new List<BillingSummary>();
 
+    [JsonIgnore]
     [InverseProperty("Address")]
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

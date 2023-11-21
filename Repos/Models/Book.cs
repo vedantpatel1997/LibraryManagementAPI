@@ -21,7 +21,8 @@ public partial class Book
 
     public int IssuedQuantity { get; set; }
 
-    public int Price { get; set; }
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal Price { get; set; }
 
     [Column("ImageURL")]
     public string ImageUrl { get; set; } = null!;

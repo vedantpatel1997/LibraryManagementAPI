@@ -77,13 +77,27 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
 
-        [AllowAnonymous]
         [HttpPost("GenerateBill")]
-        public async Task<IActionResult> GenerateBill([FromBody] GenerateBillRequest request)
+        public async Task<IActionResult> GenerateBill([FromBody] BillingDetails request)
         {
             var data = await _bUTransactionSvs.GenerateBill(request.BillingSummary, request.BillingBooksInfo);
             return Ok(data);
         }
 
+        [AllowAnonymous]
+        [HttpGet("GetBillsByUserID")]
+        public async Task<IActionResult> GetBillsByUserID(int userId)
+        {
+            var data = await _bUTransactionSvs.GetBillsByUserID(userId);
+            return Ok(data);
+        } 
+        
+        [AllowAnonymous]
+        [HttpGet("GetBillByBillID")]
+        public async Task<IActionResult> GetBillByBillID(int billId)
+        {
+            var data = await _bUTransactionSvs.GetBillByBillID(billId);
+            return Ok(data);
+        }
     }
 }
