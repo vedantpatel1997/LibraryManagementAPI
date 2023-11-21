@@ -70,6 +70,12 @@ namespace LibraryManagement.API.Container.Implimentation
             var response = new APIResponse<BookUpdateModal>();
             try
             {
+                if (book.TotalQuantity < 0)
+                {
+                    response.ResponseCode = 404;
+                    response.ErrorMessage = "Total quantity cannot be less than 0";
+                    return response;
+                }
                 var data = _mapper.Map<BookUpdateModal, Book>(book);
                 data.AvailableQuantity = data.TotalQuantity;
 
@@ -191,6 +197,12 @@ namespace LibraryManagement.API.Container.Implimentation
             var response = new APIResponse();
             try
             {
+                if (book.TotalQuantity < 0)
+                {
+                    response.ResponseCode = 404;
+                    response.ErrorMessage = "Total quantity cannot be less than 0";
+                    return response;
+                }
                 var existingBook = await _dbContext.Books.FirstOrDefaultAsync(i => i.BookId == bookId);
                 if (existingBook != null)
                 {

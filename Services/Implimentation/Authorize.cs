@@ -2,6 +2,7 @@
 using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
+using LibraryManagement.API.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -16,21 +17,31 @@ namespace LibraryManagement.API.Container.Implimentation
     {
         private readonly LibraryManagementContext _dbContext;
         private readonly JWTSettings jwtSettings;
+        private readonly IPasswordHasher _passwordHasher;
         private readonly int tokenTime = 30;
         private readonly int refreshTokenTime = 120;
 
-        public Authorize(LibraryManagementContext dbContext, IOptions<JWTSettings> options)
+        public Authorize(LibraryManagementContext dbContext, IOptions<JWTSettings> options, IPasswordHasher passwordHasher)
         {
             this._dbContext = dbContext;
             this.jwtSettings = options.Value;
+            _passwordHasher = passwordHasher;
         }
 
         public async Task<APIResponse<TokenResponse>> GenerateToken(UserCredentails usercred)
         {
             APIResponse<TokenResponse> response = new();
-            var user = await this._dbContext.Users.FirstOrDefaultAsync(x => (x.Username == usercred.Username || x.Email == usercred.Username) && x.Password == usercred.Password);
+            var user = await this._dbContext.Users.FirstOrDefaultAsync(x => (x.Username == usercred.Username || x.Email == usercred.Username));
             if (user != null)
             {
+                var result = _passwordHasher.Verify(user.Password, usercred.Password);
+                if (!result)
+                {
+                    response.ResponseCode = 401;
+                    response.ErrorMessage = "Invalid Password";
+                    return response;
+                }
+
                 // Generate Token
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var tokenKey = Encoding.UTF8.GetBytes(this.jwtSettings.securityKey);

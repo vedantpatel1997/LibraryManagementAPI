@@ -3,6 +3,7 @@ using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
+using LibraryManagement.API.Services.Implimentation;
 using LibraryManagement.API.Services.Interface;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,13 +17,16 @@ namespace LibraryManagement.API.Container.Implimentation
         private readonly LibraryManagementContext _dbContext;
         private readonly IMapper _mapper;
         private readonly IEmailMessageService _emailMessageService;
+        private readonly IPasswordHasher _passwordHasher;
 
-        public UsersService(LibraryManagementContext dbContext, IMapper mapper, IEmailMessageService emailMessageService)
+        public UsersService(LibraryManagementContext dbContext, IMapper mapper, IEmailMessageService emailMessageService, IPasswordHasher passwordHasher)
         {
             _dbContext = dbContext;
             _mapper = mapper;
             _emailMessageService = emailMessageService;
+            _passwordHasher = passwordHasher;
         }
+
 
         public async Task<APIResponse<List<UserModal>>> GetAll()
         {
@@ -56,6 +60,10 @@ namespace LibraryManagement.API.Container.Implimentation
                 }
                 else
                 {
+                    // Hashing the password for security
+                    var passwordHash = _passwordHasher.Hash(user.Password);
+                    user.Password = passwordHash;
+
                     User data = _mapper.Map<UserModal, User>(user);
                     await _dbContext.Users.AddAsync(data);
                     await _dbContext.SaveChangesAsync();
@@ -417,14 +425,15 @@ namespace LibraryManagement.API.Container.Implimentation
                 }
 
                 // Check if the old password matches the current password
-                if (user.Password != password.oldPassword)
+
+                if (_passwordHasher.Verify(user.Password,_passwordHasher.Hash(password.oldPassword)))
                 {
                     response.ResponseCode = 400; // Bad Request
-                    response.ErrorMessage = "Invalid credentials";
+                    response.ErrorMessage = "Password not match";
                     return response;
                 }
 
-                user.Password = password.newPassword;
+                user.Password = _passwordHasher.Hash(password.newPassword);
 
                 // Save changes to the database
                 await _dbContext.SaveChangesAsync();
@@ -536,8 +545,10 @@ namespace LibraryManagement.API.Container.Implimentation
                         // Generate a random 9-character password
                         string newPassword = GenerateRandomPassword(9);
 
+                        var passwordHash = _passwordHasher.Hash(newPassword);
+
                         // Update the user's password in the database
-                        user.Password = newPassword;
+                        user.Password = passwordHash;
                         await _dbContext.SaveChangesAsync();
 
                         // Send an email with the new password

@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.API.Repos.Models;
 
-[Index("Username", Name = "UQ__Users__536C85E4305277EF", IsUnique = true)]
-[Index("Email", Name = "UQ__Users__A9D10534B8EB45BC", IsUnique = true)]
+[Index("Username", Name = "UQ__Users__536C85E47B17530F", IsUnique = true)]
+[Index("Email", Name = "UQ__Users__A9D10534479E8B10", IsUnique = true)]
 public partial class User
 {
     [Key]
@@ -34,7 +34,6 @@ public partial class User
     [StringLength(50)]
     public string Phone { get; set; } = null!;
 
-    [StringLength(50)]
     public string Password { get; set; } = null!;
 
     [StringLength(10)]

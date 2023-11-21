@@ -25,6 +25,7 @@ builder.Services.AddTransient<IBooksService, BooksService>();
 builder.Services.AddTransient<IUsersService, UsersService>();
 builder.Services.AddTransient<IEmailMessageService, EmailMessageService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
+builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthorize, Authorize>();
 builder.Services.AddTransient<IBooksUsersTransactions, BooksUsersTransactions>();
 builder.Services.AddDbContext<LibraryManagementContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("APIConnection")));
