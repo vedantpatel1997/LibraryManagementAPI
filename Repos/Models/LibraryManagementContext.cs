@@ -19,6 +19,10 @@ public partial class LibraryManagementContext : DbContext
 
     public virtual DbSet<AuthenticationRefreshToken> AuthenticationRefreshTokens { get; set; }
 
+    public virtual DbSet<BillingBooksInfo> BillingBooksInfos { get; set; }
+
+    public virtual DbSet<BillingSummary> BillingSummaries { get; set; }
+
     public virtual DbSet<Book> Books { get; set; }
 
     public virtual DbSet<BookIssue> BookIssues { get; set; }
@@ -41,6 +45,29 @@ public partial class LibraryManagementContext : DbContext
         modelBuilder.Entity<AuthenticationRefreshToken>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PK__Authenti__CB9A1CFF5D887F14");
+        });
+
+        modelBuilder.Entity<BillingBooksInfo>(entity =>
+        {
+            entity.HasKey(e => e.BillingBookInfoId).HasName("PK__BillingB__10F5F5FDF21CA7C4");
+
+            entity.Property(e => e.BookCategory).IsFixedLength();
+
+            entity.HasOne(d => d.Billing).WithMany(p => p.BillingBooksInfos)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__BillingBo__billi__693CA210");
+        });
+
+        modelBuilder.Entity<BillingSummary>(entity =>
+        {
+            entity.HasKey(e => e.BillingId).HasName("PK__BillingS__39667D67391D3D5A");
+
+            entity.Property(e => e.Delivery).HasDefaultValueSql("((0))");
+            entity.Property(e => e.Pickup).HasDefaultValueSql("((0))");
+
+            entity.HasOne(d => d.Address).WithMany(p => p.BillingSummaries)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__BillingSu__addre__6A30C649");
         });
 
         modelBuilder.Entity<Book>(entity =>

@@ -5,6 +5,8 @@ using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
 using LibraryManagement.API.Services.Interface;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
+using System.Transactions;
 
 namespace LibraryManagement.API.Container.Implimentation
 {
@@ -78,7 +80,7 @@ namespace LibraryManagement.API.Container.Implimentation
                     response.ResponseCode = 200;
                 }
                 else
-                {   
+                {
                     response.ResponseCode = 404; // Not Found
                     response.ErrorMessage = "Data not found";
                 }
@@ -104,12 +106,12 @@ namespace LibraryManagement.API.Container.Implimentation
                     return response;
                 }
 
-                var data = await _dbContext.SubmitBooksInfos.Where(i => i.BookId == bookId).OrderBy(x=>x.IssueDate).ToListAsync();
+                var data = await _dbContext.SubmitBooksInfos.Where(i => i.BookId == bookId).OrderBy(x => x.IssueDate).ToListAsync();
 
-                if (data != null )
+                if (data != null)
                 {
                     var history = _mapper.Map<List<SubmitBooksInfo>, List<HistoryModal>>(data);
-                    foreach(var item in history)
+                    foreach (var item in history)
                     {
                         var userTemp = await _dbContext.Users.FindAsync(item.UserId);
                         item.Book = _mapper.Map<Book, BookModal>(book);
@@ -132,7 +134,6 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
-
 
         public async Task<APIResponse<List<IssueDTO>>> GetUsersByBookId(int bookId)
         {
@@ -750,6 +751,59 @@ namespace LibraryManagement.API.Container.Implimentation
 
             return response;
         }
+
+        public async Task<APIResponse> GenerateBill(BillingSummaryModal billingSummary, List<BillingBooksInfoModal> booksInfo)
+        {
+            APIResponse response = new APIResponse();
+
+            using (var transaction = _dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    var billingSummaryData = _mapper.Map<BillingSummaryModal, BillingSummary>(billingSummary);
+
+                    var user = await _dbContext.Users.FindAsync(billingSummaryData.UserId);
+                    billingSummaryData.Date = DateTime.Now;
+                    billingSummaryData.UserLastName = user.LastName;
+                    billingSummaryData.UserFirstName = user.FirstName;
+                    billingSummaryData.UserPhone = user.Phone;
+                    billingSummaryData.UserEmail = user.Email;
+
+                    _dbContext.BillingSummaries.Add(billingSummaryData);
+                    await _dbContext.SaveChangesAsync();
+
+                    var booksInfoData = _mapper.Map<List<BillingBooksInfoModal>, List<BillingBooksInfo>>(booksInfo);
+                    foreach (var book in booksInfoData)
+                    {
+                        var curBook = await _dbContext.Books.Include(x => x.Category).FirstOrDefaultAsync(x => x.BookId == book.BookId);
+                        book.BookName = curBook.Title;
+                        book.BookAuthor = curBook.Author;
+                        book.BookCategory = curBook.Category.Name;
+                        book.BillingId = billingSummaryData.BillingId;
+
+                        _dbContext.BillingBooksInfos.Add(book);
+                        await _dbContext.SaveChangesAsync();
+                    }
+
+                    // If everything is successful, commit the transaction
+                    transaction.Commit();
+
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200; // OK
+                }
+                catch (Exception ex)
+                {
+                    // If an exception occurs, rollback the transaction
+                    transaction.Rollback();
+
+                    response.ErrorMessage = ex.Message;
+                    response.ResponseCode = 500; // Internal Server Error
+                }
+            }
+
+            return response;
+        }
+
 
     }
 }

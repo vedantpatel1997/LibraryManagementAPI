@@ -8,6 +8,7 @@ namespace LibraryManagement.API.Helper
     {
         public AutoMapperHandler()
         {
+           
             CreateMap<Book, BookModal>()
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
                 .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title.Trim()))
@@ -29,6 +30,9 @@ namespace LibraryManagement.API.Helper
                 .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
 
             CreateMap<SubmitBooksInfo, HistoryModal>();
+            CreateMap<BillingSummary, BillingSummaryModal>().ReverseMap();
+
+            CreateMap<BillingBooksInfo, BillingBooksInfoModal>().ReverseMap();
         }
     }
 }

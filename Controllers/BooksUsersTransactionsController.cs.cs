@@ -76,6 +76,14 @@ namespace LibraryManagement.API.Controllers
             var data = await _bUTransactionSvs.SendReminderForPendingBook(userId, bookId);
             return Ok(data);
         }
-       
+
+        [AllowAnonymous]
+        [HttpPost("GenerateBill")]
+        public async Task<IActionResult> GenerateBill([FromBody] GenerateBillRequest request)
+        {
+            var data = await _bUTransactionSvs.GenerateBill(request.BillingSummary, request.BillingBooksInfo);
+            return Ok(data);
+        }
+
     }
 }

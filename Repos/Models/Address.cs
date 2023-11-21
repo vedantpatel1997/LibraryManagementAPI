@@ -30,5 +30,8 @@ public partial class Address
     public string? AddressLine2 { get; set; }
 
     [InverseProperty("Address")]
+    public virtual ICollection<BillingSummary> BillingSummaries { get; set; } = new List<BillingSummary>();
+
+    [InverseProperty("Address")]
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

@@ -18,6 +18,7 @@ namespace LibraryManagement.API.Modal
         public string Email { get; set; } 
 
         public string Phone { get; set; } 
+        public int AddressId { get; set; }
        
         public string? Role { get; set; }
 
