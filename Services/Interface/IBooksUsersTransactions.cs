@@ -19,6 +19,7 @@ namespace LibraryManagement.API.Container.Service
         Task<APIResponse> GenerateBill(BillingSummaryModal billingSummary, List<BillingBooksInfoModal> booksInfo);
         Task<APIResponse<List<BillingSummaryModal>>> GetBillsByUserID(int userId);
         Task<APIResponse<BillingSummaryModal>> GetBillByBillID(int billId);
+        Task<APIResponse> sendBill(int userId, string billHtml);
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Modal;
+using LibraryManagement.API.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -30,7 +31,7 @@ namespace LibraryManagement.API.Controllers
         {
             var data = await this._bUTransactionSvs.GetUsersByBookId(bookId);
             return Ok(data);
-        } 
+        }
         [HttpPost("IssueBook")]
         public async Task<IActionResult> IssueBook(IssueDTO issueDTO)
         {
@@ -55,7 +56,7 @@ namespace LibraryManagement.API.Controllers
         {
             var data = await _bUTransactionSvs.GetBooksHistoryByUserId(userId);
             return Ok(data);
-        } 
+        }
         [HttpGet("GetUsersHistoryByBookId")]
         public async Task<IActionResult> GetUsersHistoryByBookId(int bookId)
         {
@@ -69,7 +70,7 @@ namespace LibraryManagement.API.Controllers
             var data = await _bUTransactionSvs.SendReminderForPendingBooks(userId);
             return Ok(data);
         }
-        
+
         [HttpGet("SendReminderForPendingBook")]
         public async Task<IActionResult> SendReminderForPendingBook(int userId, int bookId)
         {
@@ -84,20 +85,28 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
 
-        [AllowAnonymous]
         [HttpGet("GetBillsByUserID")]
         public async Task<IActionResult> GetBillsByUserID(int userId)
         {
             var data = await _bUTransactionSvs.GetBillsByUserID(userId);
             return Ok(data);
-        } 
-        
-        [AllowAnonymous]
+        }
+
         [HttpGet("GetBillByBillID")]
         public async Task<IActionResult> GetBillByBillID(int billId)
         {
             var data = await _bUTransactionSvs.GetBillByBillID(billId);
             return Ok(data);
-        } 
+        }
+        
+        //[AllowAnonymous]
+        //[HttpPost("SendBill")]
+        //public async Task<IActionResult> SendBill(BillModal bill)
+        //{
+        //    var data = await _bUTransactionSvs.sendBill(bill.userId, bill.billHtml);
+        //    return Ok(data);
+        //}
+
+
     }
 }

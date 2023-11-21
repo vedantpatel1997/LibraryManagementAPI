@@ -779,6 +779,7 @@ namespace LibraryManagement.API.Container.Implimentation
                         book.BookName = curBook.Title;
                         book.BookAuthor = curBook.Author;
                         book.BookCategory = curBook.Category.Name;
+                        book.BookImageUrl = curBook.ImageUrl;
                         book.BillingId = billingSummaryData.BillingId;
 
                         _dbContext.BillingBooksInfos.Add(book);
@@ -849,9 +850,36 @@ namespace LibraryManagement.API.Container.Implimentation
                     response.ErrorMessage = "Bill not found";
                     return response;
                 }
-                response.Data = _mapper.Map<BillingSummary, BillingSummaryModal>(bill); 
+                response.Data = _mapper.Map<BillingSummary, BillingSummaryModal>(bill);
                 response.IsSuccess = true;
                 response.ResponseCode = 200; // OK
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+
+        public async Task<APIResponse> sendBill(int userId, string billHtml)
+        {
+            var response = new APIResponse();
+            try
+            {
+                // Get the user's email address (replace this with your logic to retrieve the email)
+                var user = await _dbContext.Users.FindAsync(userId);
+                var userEmail = user.Email;
+
+                // Define email details
+                string subject = "Your Bill";
+                string bodyHtml = "Thank you for your purchase. Here is your bill:";
+
+                // Call the SendMessage method to send the email with the bill attachment
+                await _emailMessageService.SendMessage(userEmail, subject, bodyHtml, billHtml);
+                response.IsSuccess = true;
+                response.ResponseCode = 200; // OK
+
             }
             catch (Exception ex)
             {

@@ -40,6 +40,9 @@ public partial class BillingBooksInfo
     [Column("bookRentPrice", TypeName = "decimal(10, 2)")]
     public decimal BookRentPrice { get; set; }
 
+    [Column("bookImageURL")]
+    public string BookImageUrl { get; set; } = null!;
+
     [Column("billingId")]
     public int BillingId { get; set; }
 
