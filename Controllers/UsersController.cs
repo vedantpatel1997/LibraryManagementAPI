@@ -11,6 +11,8 @@ namespace LibraryManagement.API.Controllers
     [EnableCors]
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+
     public class UsersController : ControllerBase
     {
         private readonly IUsersService _usersSvc;
@@ -34,6 +36,7 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
 
+        [AllowAnonymous]
         [HttpPost("Create")]
         public async Task<IActionResult> Create([FromBody] UserModal user)
         {

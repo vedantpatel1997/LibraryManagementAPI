@@ -9,6 +9,8 @@ namespace LibraryManagement.API.Controllers
     [EnableCors]
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+
     public class BooksUsersTransactionsController : ControllerBase
     {
         private readonly IBooksUsersTransactions _bUTransactionSvs;

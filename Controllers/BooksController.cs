@@ -12,6 +12,8 @@ namespace LibraryManagement.API.Controllers
     [EnableCors]
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+
     public class BooksController : ControllerBase
     {
         private readonly IBooksService _booksSvc;

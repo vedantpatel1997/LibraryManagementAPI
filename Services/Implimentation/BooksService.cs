@@ -15,13 +15,8 @@ namespace LibraryManagement.API.Container.Implimentation
 
         public BooksService(LibraryManagementContext dbContext, IMapper mapper)
         {
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-        }
-
-        public LibraryManagementContext Get_dbContext()
-        {
-            return _dbContext;
+            _dbContext = dbContext;
+            _mapper = mapper;
         }
 
         public async Task<APIResponse<List<BookModal>>> GetAll()
@@ -49,7 +44,6 @@ namespace LibraryManagement.API.Container.Implimentation
                         book.IsBestSeller = true;
                     }
                     else { book.IsBestSeller = false; }
-                    Console.WriteLine($"{book.Title} : SellingCount {bestSellerCount}");
                 }
 
                 response.Data = bookModalData;
@@ -63,7 +57,6 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
-
 
         public async Task<APIResponse<BookUpdateModal>> Create(BookUpdateModal book)
         {
