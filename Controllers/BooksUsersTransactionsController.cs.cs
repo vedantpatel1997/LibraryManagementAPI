@@ -98,6 +98,6 @@ namespace LibraryManagement.API.Controllers
         {
             var data = await _bUTransactionSvs.GetBillByBillID(billId);
             return Ok(data);
-        }
+        } 
     }
 }
