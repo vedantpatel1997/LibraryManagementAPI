@@ -11,7 +11,7 @@ namespace LibraryManagement.API.Container.Service
         Task<APIResponse<List<SubmitBooksInfo>>> GetBooksHistoryByUserId(int bookId);
         Task<APIResponse<List<HistoryModal>>> GetUsersHistoryByBookId(int bookId);
         Task<APIResponse> IssueBook(IssueDTO issueDTO);
-        Task<APIResponse> IssueBooks(List<IssueDTO> issueDTO);
+        Task<APIResponse> IssueBooks(BillingDetails billingDetails);
         Task<APIResponse> SubmitBook(SubmitDTO SubmitDTO);
         Task<APIResponse> SendReminderForPendingBooks(int userId);
         Task<APIResponse> SendReminderForPendingBook(int userId, int bookId);

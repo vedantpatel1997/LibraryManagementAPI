@@ -39,9 +39,9 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
         [HttpPost("IssueBooks")]
-        public async Task<IActionResult> IssueBooks(List<IssueDTO> issueDTOs)
+        public async Task<IActionResult> IssueBooks(BillingDetails billingDetails)
         {
-            var data = await this._bUTransactionSvs.IssueBooks(issueDTOs);
+            var data = await this._bUTransactionSvs.IssueBooks(billingDetails);
             return Ok(data);
         }
         [HttpPost("SubmitBook")]

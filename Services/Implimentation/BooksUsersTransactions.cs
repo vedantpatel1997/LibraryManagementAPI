@@ -262,7 +262,7 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-        public async Task<APIResponse> IssueBooks(List<IssueDTO> issueDTOs)
+        public async Task<APIResponse> IssueBooks(BillingDetails billingDetails)
         {
             var response = new APIResponse();
 
@@ -270,7 +270,7 @@ namespace LibraryManagement.API.Container.Implimentation
             {
                 try
                 {
-                    foreach (var curIssueDTO in issueDTOs)
+                    foreach (var curIssueDTO in billingDetails.IssueDTOs)
                     {
                         // Retrieve the book
                         var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == curIssueDTO.BookId);
@@ -353,12 +353,13 @@ namespace LibraryManagement.API.Container.Implimentation
                         }
                     }
 
+                    await GenerateBill(billingDetails.BillingSummary, billingDetails.BillingBooksInfo);
                     // Commit the transaction after the loop
                     transaction.Commit();
 
-                    if (issueDTOs.Count > 0)
+                    if (billingDetails.IssueDTOs.Count > 0)
                     {
-                        var user = await _dbContext.Users.FindAsync(issueDTOs[0].UserId);
+                        var user = await _dbContext.Users.FindAsync(billingDetails.IssueDTOs[0].UserId);
                         string subject = "Books Issued Successfully";
 
                         string bodyHtml = $@"
@@ -374,7 +375,7 @@ namespace LibraryManagement.API.Container.Implimentation
                                         </tr>
                             ";
 
-                        foreach (var issueDTO in issueDTOs)
+                        foreach (var issueDTO in billingDetails.IssueDTOs)
                         {
                             var book = await _dbContext.Books.FindAsync(issueDTO.BookId);
                             var dueDate = DateTime.Today.AddDays(issueDTO.Days); // Calculate the due date
@@ -756,50 +757,45 @@ namespace LibraryManagement.API.Container.Implimentation
         {
             APIResponse response = new APIResponse();
 
-            using (var transaction = _dbContext.Database.BeginTransaction())
+            try
             {
-                try
+                var billingSummaryData = _mapper.Map<BillingSummaryModal, BillingSummary>(billingSummary);
+
+                var user = await _dbContext.Users.FindAsync(billingSummaryData.UserId);
+                billingSummaryData.Date = DateTime.Now;
+                billingSummaryData.UserLastName = user.LastName;
+                billingSummaryData.UserFirstName = user.FirstName;
+                billingSummaryData.UserPhone = user.Phone;
+                billingSummaryData.UserEmail = user.Email;
+
+                _dbContext.BillingSummaries.Add(billingSummaryData);
+                await _dbContext.SaveChangesAsync();
+
+                var booksInfoData = _mapper.Map<List<BillingBooksInfoModal>, List<BillingBooksInfo>>(booksInfo);
+                foreach (var book in booksInfoData)
                 {
-                    var billingSummaryData = _mapper.Map<BillingSummaryModal, BillingSummary>(billingSummary);
+                    var curBook = await _dbContext.Books.Include(x => x.Category).FirstOrDefaultAsync(x => x.BookId == book.BookId);
+                    book.BookName = curBook.Title;
+                    book.BookAuthor = curBook.Author;
+                    book.BookCategory = curBook.Category.Name;
+                    book.BookImageUrl = curBook.ImageUrl;
+                    book.BillingId = billingSummaryData.BillingId;
 
-                    var user = await _dbContext.Users.FindAsync(billingSummaryData.UserId);
-                    billingSummaryData.Date = DateTime.Now;
-                    billingSummaryData.UserLastName = user.LastName;
-                    billingSummaryData.UserFirstName = user.FirstName;
-                    billingSummaryData.UserPhone = user.Phone;
-                    billingSummaryData.UserEmail = user.Email;
-
-                    _dbContext.BillingSummaries.Add(billingSummaryData);
+                    _dbContext.BillingBooksInfos.Add(book);
                     await _dbContext.SaveChangesAsync();
-
-                    var booksInfoData = _mapper.Map<List<BillingBooksInfoModal>, List<BillingBooksInfo>>(booksInfo);
-                    foreach (var book in booksInfoData)
-                    {
-                        var curBook = await _dbContext.Books.Include(x => x.Category).FirstOrDefaultAsync(x => x.BookId == book.BookId);
-                        book.BookName = curBook.Title;
-                        book.BookAuthor = curBook.Author;
-                        book.BookCategory = curBook.Category.Name;
-                        book.BookImageUrl = curBook.ImageUrl;
-                        book.BillingId = billingSummaryData.BillingId;
-
-                        _dbContext.BillingBooksInfos.Add(book);
-                        await _dbContext.SaveChangesAsync();
-                    }
-
-                    // If everything is successful, commit the transaction
-                    transaction.Commit();
-
-                    response.IsSuccess = true;
-                    response.ResponseCode = 200; // OK
                 }
-                catch (Exception ex)
-                {
-                    // If an exception occurs, rollback the transaction
-                    transaction.Rollback();
 
-                    response.ErrorMessage = ex.Message;
-                    response.ResponseCode = 500; // Internal Server Error
-                }
+                // If everything is successful, commit the transaction
+
+                response.IsSuccess = true;
+                response.ResponseCode = 200; // OK
+            }
+            catch (Exception ex)
+            {
+                // If an exception occurs, rollback the transaction
+
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
             }
 
             return response;
