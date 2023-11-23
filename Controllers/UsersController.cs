@@ -98,5 +98,18 @@ namespace LibraryManagement.API.Controllers
             var data = await _usersSvc.SendResetPassword(userId);
             return Ok(data);
         }
+        
+        [HttpGet("MakeUser")]
+        public async Task<IActionResult> MakeUser(int userId)
+        {
+            var data = await _usersSvc.MakeUser(userId);
+            return Ok(data);
+        }
+        [HttpGet("MakeAdmin")]
+        public async Task<IActionResult> MakeAdmin( int userId)
+        {
+            var data = await _usersSvc.MakeAdmin(userId);
+            return Ok(data);
+        }
     }
 }

@@ -34,7 +34,7 @@ namespace LibraryManagement.API.Container.Implimentation
             APIResponse<List<UserModal>> response = new APIResponse<List<UserModal>>();
             try
             {
-                var data = await _dbContext.Users.Where(x => x.Role != "Admin").ToListAsync();
+                var data = await _dbContext.Users.Where(x => x.Role != "Owner").ToListAsync();
                 response.Data = _mapper.Map<List<User>, List<UserModal>>(data);
                 response.IsSuccess = true;
                 response.ResponseCode = 200;
@@ -427,7 +427,7 @@ namespace LibraryManagement.API.Container.Implimentation
 
                 // Check if the old password matches the current password
 
-                if (_passwordHasher.Verify(user.Password,_passwordHasher.Hash(password.oldPassword)))
+                if (_passwordHasher.Verify(user.Password, _passwordHasher.Hash(password.oldPassword)))
                 {
                     response.ResponseCode = 400; // Bad Request
                     response.ErrorMessage = "Password not match";
@@ -603,6 +603,61 @@ namespace LibraryManagement.API.Container.Implimentation
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
+        public async Task<APIResponse<string>> MakeUser(int userId)
+        {
+            APIResponse<string> response = new();
+            try
+            {
+                var user = await _dbContext.Users.FindAsync(userId);
+
+                if (user == null)
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "User not found";
+                    return response;
+                }
+                user.Role = "User";
+                await _dbContext.SaveChangesAsync();
+                response.ErrorMessage = $"{user.FirstName} {user.LastName} has now 'User' role";
+                response.ResponseCode = 200;
+                response.IsSuccess = true;
+
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
+        
+        public async Task<APIResponse<string>> MakeAdmin(int userId)
+        {
+            APIResponse<string> response = new();
+            try
+            {
+                var user = await _dbContext.Users.FindAsync(userId);
+
+                if (user == null)
+                {
+                    response.ResponseCode = 404; // Not Found
+                    response.ErrorMessage = "User not found";
+                    return response;
+                }
+                user.Role = "Admin";
+                await _dbContext.SaveChangesAsync();
+                response.ErrorMessage = $"{user.FirstName} {user.LastName} has now 'Admin' role";
+                response.ResponseCode = 200;
+                response.IsSuccess = true;
+
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
     }
 
 }

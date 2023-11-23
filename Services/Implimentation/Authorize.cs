@@ -1,4 +1,5 @@
-﻿using LibraryManagement.API.Container.Service;
+﻿using AutoMapper;
+using LibraryManagement.API.Container.Service;
 using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
@@ -18,20 +19,22 @@ namespace LibraryManagement.API.Container.Implimentation
         private readonly LibraryManagementContext _dbContext;
         private readonly JWTSettings jwtSettings;
         private readonly IPasswordHasher _passwordHasher;
-        private readonly int tokenTime = 30;
-        private readonly int refreshTokenTime = 120;
+        private readonly IMapper _mapper;
+        private readonly int tokenTime = 60; // seconds
+        private readonly int refreshTokenTime = 120;//seconds
 
-        public Authorize(LibraryManagementContext dbContext, IOptions<JWTSettings> options, IPasswordHasher passwordHasher)
+        public Authorize(LibraryManagementContext dbContext, IOptions<JWTSettings> options, IPasswordHasher passwordHasher, IMapper mapper)
         {
             this._dbContext = dbContext;
             this.jwtSettings = options.Value;
             _passwordHasher = passwordHasher;
+            _mapper = mapper;
         }
 
         public async Task<APIResponse<TokenResponse>> GenerateToken(UserCredentails usercred)
         {
             APIResponse<TokenResponse> response = new();
-            var user = await this._dbContext.Users.FirstOrDefaultAsync(x => (x.Username == usercred.Username || x.Email == usercred.Username));
+            var user = await this._dbContext.Users.Include(x => x.Address).FirstOrDefaultAsync(x => (x.Username == usercred.Username || x.Email == usercred.Username));
             if (user != null)
             {
                 var result = _passwordHasher.Verify(user.Password, usercred.Password);
@@ -59,7 +62,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 var token = tokenHandler.CreateToken(tokenDesc);
                 var finalToken = tokenHandler.WriteToken(token);
 
-                response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) };
+                response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username), userData = _mapper.Map<User, UserModal>(user) };
                 response.IsSuccess = true;
                 response.ResponseCode = 200;
             }
@@ -78,7 +81,7 @@ namespace LibraryManagement.API.Container.Implimentation
             if (_refreshToken != null)
             {
                 // Retrieve the user's role from the database
-                var user = await this._dbContext.Users.FirstOrDefaultAsync(x => x.Username == _refreshToken.UserId);
+                var user = await this._dbContext.Users.Include(x=>x.Address).FirstOrDefaultAsync(x => x.Username == _refreshToken.UserId);
 
                 if (user != null)
                 {
@@ -101,7 +104,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.jwtSettings.securityKey)), SecurityAlgorithms.HmacSha256));
                     var finalToken = tokenHandler.WriteToken(newToken);
 
-                    response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username) };
+                    response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username), userData = _mapper.Map<User, UserModal>(user) };
                     response.IsSuccess = true;
                     response.ResponseCode = 200;
                 }

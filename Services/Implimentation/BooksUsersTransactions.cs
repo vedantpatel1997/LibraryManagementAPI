@@ -292,8 +292,8 @@ namespace LibraryManagement.API.Container.Implimentation
                         else if (user.AddressId == null)
                         {
                             response.ResponseCode = 404; // Not Found
-                            string registrationLink = "/Books/User/Address";
-                            response.ErrorMessage = $"Please Register your <a href='{registrationLink}'>Address</a> first!";
+                            string registrationLink = "ng-reflect-router-link=\"/Books/User/Address\"";
+                            response.ErrorMessage = $"Please register your <a {registrationLink}>address</a> first!";
                             return response;
 
                         }
