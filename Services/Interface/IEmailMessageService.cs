@@ -3,7 +3,6 @@
     public interface IEmailMessageService
     {
         Task SendMessage(string email, string subject, string bodyHtml);
-        Task SendMessage(string email, string subject, string bodyHtml, string attachmentHtml);
-
+        Task SendMessageWithAttachment(string email, string subject, string bodyHtml, byte[] attachmentData, string attachmentFileName);
     }
 }

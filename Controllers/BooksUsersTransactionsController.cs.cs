@@ -98,14 +98,13 @@ namespace LibraryManagement.API.Controllers
             var data = await _bUTransactionSvs.GetBillByBillID(billId);
             return Ok(data);
         }
-        
-        //[AllowAnonymous]
-        //[HttpPost("SendBill")]
-        //public async Task<IActionResult> SendBill(BillModal bill)
-        //{
-        //    var data = await _bUTransactionSvs.sendBill(bill.userId, bill.billHtml);
-        //    return Ok(data);
-        //}
+
+        [HttpPost("sendPDF")]
+        public async Task<IActionResult> sendPDF([FromForm] IFormFile pdf, [FromForm] int userId)
+        {
+            var data = await _bUTransactionSvs.SendPDF(pdf, userId);
+            return Ok(data);
+        }
 
 
     }

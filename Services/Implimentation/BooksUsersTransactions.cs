@@ -858,7 +858,7 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-        public async Task<APIResponse> sendBill(int userId, string billHtml)
+        public async Task<APIResponse> SendPDF(IFormFile pdf, int userId)
         {
             var response = new APIResponse();
             try
@@ -868,14 +868,21 @@ namespace LibraryManagement.API.Container.Implimentation
                 var userEmail = user.Email;
 
                 // Define email details
-                string subject = "Your Bill";
-                string bodyHtml = "Thank you for your purchase. Here is your bill:";
+                string subject = "Your Library Transaction Receipt";
+                string bodyHtml = "Thank you for using our Library Management Service. Here is your transaction receipt:";
 
-                // Call the SendMessage method to send the email with the bill attachment
-                await _emailMessageService.SendMessage(userEmail, subject, bodyHtml, billHtml);
+                // Convert IFormFile to byte array
+                using (var memoryStream = new MemoryStream())
+                {
+                    await pdf.CopyToAsync(memoryStream);
+                    var pdfBytes = memoryStream.ToArray();
+
+                    // Call the SendMessageWithAttachment method to send the email with the PDF attachment
+                    await _emailMessageService.SendMessageWithAttachment(userEmail, subject, bodyHtml, pdfBytes, "InvoiceVP");
+                }
+
                 response.IsSuccess = true;
                 response.ResponseCode = 200; // OK
-
             }
             catch (Exception ex)
             {
@@ -884,5 +891,7 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
+
+
     }
 }
