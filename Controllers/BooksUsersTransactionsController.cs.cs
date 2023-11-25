@@ -32,12 +32,12 @@ namespace LibraryManagement.API.Controllers
             var data = await this._bUTransactionSvs.GetUsersByBookId(bookId);
             return Ok(data);
         }
-        [HttpPost("IssueBook")]
-        public async Task<IActionResult> IssueBook(IssueDTO issueDTO)
-        {
-            var data = await this._bUTransactionSvs.IssueBook(issueDTO);
-            return Ok(data);
-        }
+        //[HttpPost("IssueBook")]
+        //public async Task<IActionResult> IssueBook(IssueDTO issueDTO)
+        //{
+        //    var data = await this._bUTransactionSvs.IssueBook(issueDTO);
+        //    return Ok(data);
+        //}
         [HttpPost("IssueBooks")]
         public async Task<IActionResult> IssueBooks(BillingDetails billingDetails)
         {

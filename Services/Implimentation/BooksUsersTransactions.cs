@@ -556,7 +556,7 @@ namespace LibraryManagement.API.Container.Implimentation
             try
             {
                 // Retrieve the book
-                var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.BookId == SubmitDTO.BookId);
+                var book = await _dbContext.Books.Include(c => c.Category).FirstOrDefaultAsync(x => x.BookId == SubmitDTO.BookId);
                 var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId);
 
                 if (book == null || user == null)
@@ -590,14 +590,64 @@ namespace LibraryManagement.API.Container.Implimentation
                 {
                     try
                     {
-                        // Issue the book
+                        // Getting a book issue record
+                        var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId && x.BookId == SubmitDTO.BookId);
+
+                        // Generate bill record if penalty is there
+                        // 2 dollars a day penalty will applied.
+                        int lateDays = (DateTime.Now - (bookIssued.IssueDate.AddDays(bookIssued.Days))).Days;
+                        decimal taxRate = 0.13M;
+                        if (lateDays > 0)
+                        {
+                            // Assuming penalty is $1 per day
+                            decimal penaltyAmount = 1 * lateDays;
+                            // Calculate tax on the penalty amount
+                            decimal tax = penaltyAmount * taxRate;
+                            // Calculate the total amount including penalty and tax
+                            decimal totalAmount = penaltyAmount + tax;
+
+                            var billingSummary = new BillingSummary
+                            {
+                                UserId = SubmitDTO.UserId,
+                                UserFirstName = user.FirstName,
+                                UserLastName = user.LastName,
+                                UserEmail = user.Email,
+                                UserPhone = user.Phone,
+                                Date = DateTime.Now,
+                                BookQuantity = 1,
+                                Delivery = false,
+                                Pickup = false,
+                                AddressId = (int)user.AddressId,
+                                Tax = tax,
+                                TotalAmount = totalAmount,
+                            };
+                            await _dbContext.BillingSummaries.AddAsync(billingSummary);
+                            await _dbContext.SaveChangesAsync();
+
+                            var billingbookInfo = new BillingBooksInfo
+                            {
+                                BookId = book.BookId,
+                                BookName = book.Title,
+                                RentDays = bookIssued.Days,
+                                EstimatedReturnDate = bookIssued.IssueDate.AddDays(bookIssued.Days),
+                                BookAuthor = book.Author,
+                                BookCategory = book.Category.Name,
+                                BookOriginalPrice = book.Price,
+                                BookRentPrice = penaltyAmount,
+                                BookImageUrl = book.ImageUrl,
+                                BillingId = billingSummary.BillingId
+                            };
+                            await _dbContext.BillingBooksInfos.AddAsync(billingbookInfo);
+                            await _dbContext.SaveChangesAsync();
+
+                        }
+
+                        // Update the book count
                         var availableQty = book.AvailableQuantity + 1;
                         var issueQu = book.IssuedQuantity - 1;
                         book.AvailableQuantity = availableQty;
                         book.IssuedQuantity = issueQu;
 
-                        // Getting a book issue record
-                        var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId && x.BookId == SubmitDTO.BookId);
 
                         // Add book to submitInfo
 

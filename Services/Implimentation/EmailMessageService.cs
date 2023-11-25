@@ -157,7 +157,5 @@ namespace LibraryManagement.API.Services.Implimentation
                 Console.WriteLine($"Failed to send email with attachment: {ex.Message}");
             }
         }
-
-
     }
 }
