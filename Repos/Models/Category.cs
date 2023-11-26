@@ -15,6 +15,9 @@ public partial class Category
     [Column("name")]
     public string Name { get; set; } = null!;
 
+    [Column("imageURL")]
+    public string? ImageUrl { get; set; }
+
     [InverseProperty("Category")]
     public virtual ICollection<Book> Books { get; set; } = new List<Book>();
 }

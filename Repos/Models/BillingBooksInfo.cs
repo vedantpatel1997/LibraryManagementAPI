@@ -46,7 +46,6 @@ public partial class BillingBooksInfo
     [Column("billingId")]
     public int BillingId { get; set; }
 
-    [JsonIgnore]
     [ForeignKey("BillingId")]
     [InverseProperty("BillingBooksInfos")]
     public virtual BillingSummary Billing { get; set; } = null!;
