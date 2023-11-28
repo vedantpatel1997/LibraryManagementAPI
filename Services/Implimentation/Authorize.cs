@@ -20,8 +20,8 @@ namespace LibraryManagement.API.Container.Implimentation
         private readonly JWTSettings jwtSettings;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IMapper _mapper;
-        private readonly int tokenTime = 60; // seconds
-        private readonly int refreshTokenTime = 120;//seconds
+        private readonly int tokenTime = 120; // seconds
+        private readonly int refreshTokenTime = 300;//seconds
 
         public Authorize(LibraryManagementContext dbContext, IOptions<JWTSettings> options, IPasswordHasher passwordHasher, IMapper mapper)
         {

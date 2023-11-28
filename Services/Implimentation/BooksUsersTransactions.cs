@@ -353,7 +353,13 @@ namespace LibraryManagement.API.Container.Implimentation
                         }
                     }
 
-                    await GenerateBill(billingDetails.BillingSummary, billingDetails.BillingBooksInfo);
+                    var billResponse = await GenerateBill(billingDetails.BillingSummary, billingDetails.BillingBooksInfo);
+
+                    // Check if bill is generated successfully, otherwisw throw error.
+                    if (!billResponse.IsSuccess)
+                    {
+                        return billResponse;
+                    }
                     // Commit the transaction after the loop
                     transaction.Commit();
 
@@ -817,6 +823,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 billingSummaryData.UserFirstName = user.FirstName;
                 billingSummaryData.UserPhone = user.Phone;
                 billingSummaryData.UserEmail = user.Email;
+                billingSummaryData.AddressId = (int)user.AddressId;
 
                 _dbContext.BillingSummaries.Add(billingSummaryData);
                 await _dbContext.SaveChangesAsync();

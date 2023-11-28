@@ -61,6 +61,8 @@ namespace LibraryManagement.API.Container.Implimentation
                 }
                 else
                 {
+                    // Storing decrypted password to send in email
+                    var decryptedPass = user.Password;
                     // Hashing the password for security
                     var passwordHash = _passwordHasher.Hash(user.Password);
                     user.Password = passwordHash;
@@ -86,7 +88,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             </tr>
                             <tr>
                                 <td><strong>Password:</strong></td>
-                                <td><span>{user.Password}</span></td>
+                                <td><span>{decryptedPass}</span></td>
                             </tr>
                         </table>
 
@@ -166,6 +168,12 @@ namespace LibraryManagement.API.Container.Implimentation
                 }
                 else
                 {
+                    // Empty the user's cart
+                    var userCartItems = await _dbContext.Carts.Where(c => c.UserId == userId).ToListAsync();
+                    _dbContext.Carts.RemoveRange(userCartItems);
+                    await _dbContext.SaveChangesAsync();
+
+
                     // User has no pending books, proceed with deletion
                     _dbContext.Remove(user);
                     await _dbContext.SaveChangesAsync();
@@ -630,7 +638,7 @@ namespace LibraryManagement.API.Container.Implimentation
             }
             return response;
         }
-        
+
         public async Task<APIResponse<string>> MakeAdmin(int userId)
         {
             APIResponse<string> response = new();
