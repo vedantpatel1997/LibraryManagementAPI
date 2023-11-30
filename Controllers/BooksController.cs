@@ -30,6 +30,46 @@ namespace LibraryManagement.API.Controllers
             return Ok(data);
         }
 
+        [AllowAnonymous]
+        [HttpGet("GetDate")]
+        public async Task<IActionResult> GetDate()
+        {
+            var curUTCTIME = DateTime.UtcNow;
+            var utcDateTime = curUTCTIME.AddDays(5);
+
+            // Convert to India Standard Time (IST)
+            TimeZoneInfo indiaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            DateTime indiaDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, indiaTimeZone);
+
+            // Convert to Canada EST time (Eastern Time)
+            TimeZoneInfo canadaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/New_York"); // or "Eastern Daylight Time" when daylight saving time is in effect
+            DateTime canadaDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, canadaTimeZone);
+
+
+            var dates = new
+            {
+                CurrentUTCTIME = curUTCTIME,
+                IndiaTime = indiaDateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                CanadaEST = canadaDateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+            };
+            TimeZoneInfo easternTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+
+            // Check whether daylight saving time is currently in effect
+            bool isDaylightSavingTime = easternTimeZone.IsDaylightSavingTime(DateTime.UtcNow.AddMonths(5));
+
+            if (isDaylightSavingTime)
+            {
+                Console.WriteLine("It is currently Eastern Daylight Time (EDT).");
+            }
+            else
+            {
+                Console.WriteLine("It is currently Eastern Standard Time (EST).");
+            }
+
+            return Ok(dates);
+        }
+
+
         [HttpGet("GetBookById")]
         public async Task<IActionResult> GetBookById(int id)
         {
@@ -75,7 +115,7 @@ namespace LibraryManagement.API.Controllers
         }
 
 
-        
+
 
         [HttpPost("AddToCart")]
         public async Task<IActionResult> AddToCart(CartModal cart)

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.API.Repos.Models;
@@ -33,7 +32,7 @@ public partial class BillingSummary
     [StringLength(10)]
     public string UserPhone { get; set; } = null!;
 
-    [Column("date", TypeName = "date")]
+    [Column("date")]
     public DateTime Date { get; set; }
 
     [Column("bookQuantity")]

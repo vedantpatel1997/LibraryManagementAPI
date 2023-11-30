@@ -331,7 +331,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             {
                                 BookId = curIssueDTO.BookId,
                                 UserId = curIssueDTO.UserId,
-                                IssueDate = DateTime.Now,
+                                IssueDate = DateTime.UtcNow,
                                 Days = curIssueDTO.Days
                             };
 
@@ -365,6 +365,9 @@ namespace LibraryManagement.API.Container.Implimentation
 
                     if (billingDetails.IssueDTOs.Count > 0)
                     {
+                        // Use Canada/Waterloo time zone by default
+                        var waterlooTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); // or "Eastern Daylight Time" during daylight saving time
+
                         var user = await _dbContext.Users.FindAsync(billingDetails.IssueDTOs[0].UserId);
                         string subject = "Books Issued Successfully";
 
@@ -384,13 +387,13 @@ namespace LibraryManagement.API.Container.Implimentation
                         foreach (var issueDTO in billingDetails.IssueDTOs)
                         {
                             var book = await _dbContext.Books.FindAsync(issueDTO.BookId);
-                            var dueDate = DateTime.Today.AddDays(issueDTO.Days); // Calculate the due date
+                            var dueDate = DateTime.UtcNow.AddDays(issueDTO.Days); // Calculate the due date
 
                             bodyHtml += $@"
                                 <tr>
                                     <td style='padding: 8px; border: 1px solid #333;'>{book?.Title}</td>
                                     <td style='padding: 8px; border: 1px solid #333;'>{issueDTO.Days}</td>
-                                    <td style='padding: 8px; border: 1px solid #333;'>{dueDate.ToString("D")}</td>
+                                    <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(dueDate, waterlooTimeZone)} (EST Time) EOD</td>
                                 ";
                         }
 
@@ -600,8 +603,8 @@ namespace LibraryManagement.API.Container.Implimentation
                         var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId && x.BookId == SubmitDTO.BookId);
 
                         // Generate bill record if penalty is there
-                        // 2 dollars a day penalty will applied.
-                        int lateDays = (DateTime.Now - (bookIssued.IssueDate.AddDays(bookIssued.Days))).Days;
+                        // 1 dollars a day penalty will applied.
+                        int lateDays = (DateTime.UtcNow - (bookIssued.IssueDate.AddDays(bookIssued.Days))).Days;
                         decimal taxRate = 0.13M;
                         if (lateDays > 0)
                         {
@@ -619,7 +622,7 @@ namespace LibraryManagement.API.Container.Implimentation
                                 UserLastName = user.LastName,
                                 UserEmail = user.Email,
                                 UserPhone = user.Phone,
-                                Date = DateTime.Now,
+                                Date = DateTime.UtcNow,
                                 BookQuantity = 1,
                                 Delivery = false,
                                 Pickup = false,
@@ -818,7 +821,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 var billingSummaryData = _mapper.Map<BillingSummaryModal, BillingSummary>(billingSummary);
 
                 var user = await _dbContext.Users.FindAsync(billingSummaryData.UserId);
-                billingSummaryData.Date = DateTime.Now;
+                billingSummaryData.Date = DateTime.UtcNow;
                 billingSummaryData.UserLastName = user.LastName;
                 billingSummaryData.UserFirstName = user.FirstName;
                 billingSummaryData.UserPhone = user.Phone;
@@ -837,6 +840,7 @@ namespace LibraryManagement.API.Container.Implimentation
                     book.BookCategory = curBook.Category.Name;
                     book.BookImageUrl = curBook.ImageUrl;
                     book.BillingId = billingSummaryData.BillingId;
+                    book.EstimatedReturnDate = DateTime.UtcNow.AddDays(book.RentDays);
 
                     _dbContext.BillingBooksInfos.Add(book);
                     await _dbContext.SaveChangesAsync();

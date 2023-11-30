@@ -22,10 +22,10 @@ public partial class SubmitBooksInfo
     [Column("userId")]
     public int UserId { get; set; }
 
-    [Column("issueDate", TypeName = "date")]
+    [Column("issueDate")]
     public DateTime IssueDate { get; set; }
 
-    [Column("returnDate", TypeName = "date")]
+    [Column("returnDate")]
     public DateTime ReturnDate { get; set; }
 
     [Column("days")]

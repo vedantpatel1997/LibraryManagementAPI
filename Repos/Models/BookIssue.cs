@@ -19,7 +19,6 @@ public partial class BookIssue
     [Key]
     public int UserId { get; set; }
 
-    [Column(TypeName = "date")]
     public DateTime IssueDate { get; set; }
 
     public int Days { get; set; }

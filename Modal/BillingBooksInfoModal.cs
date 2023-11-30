@@ -14,7 +14,7 @@
         public decimal bookRentPrice { get; set; }
         public decimal bookOriginalPrice { get; set; }
 
-        public DateTime EstimatedReturnDate { get; set; }
+        public DateTime? EstimatedReturnDate { get; set; }
 
         public int? BillingId { get; set; }
     }

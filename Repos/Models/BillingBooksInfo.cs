@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.API.Repos.Models;
@@ -23,7 +22,7 @@ public partial class BillingBooksInfo
     [Column("rentDays")]
     public int RentDays { get; set; }
 
-    [Column("estimatedReturnDate", TypeName = "date")]
+    [Column("estimatedReturnDate")]
     public DateTime EstimatedReturnDate { get; set; }
 
     [Column("bookAuthor")]
