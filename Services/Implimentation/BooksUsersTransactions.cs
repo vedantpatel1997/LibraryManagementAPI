@@ -366,9 +366,9 @@ namespace LibraryManagement.API.Container.Implimentation
                     if (billingDetails.IssueDTOs.Count > 0)
                     {
                         // Use Canada/Waterloo time zone by default
-                        var waterlooTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); // or "Eastern Daylight Time" during daylight saving time
 
                         var user = await _dbContext.Users.FindAsync(billingDetails.IssueDTOs[0].UserId);
+
                         string subject = "Books Issued Successfully";
 
                         string bodyHtml = $@"
@@ -393,7 +393,7 @@ namespace LibraryManagement.API.Container.Implimentation
                                 <tr>
                                     <td style='padding: 8px; border: 1px solid #333;'>{book?.Title}</td>
                                     <td style='padding: 8px; border: 1px solid #333;'>{issueDTO.Days}</td>
-                                    <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(dueDate, waterlooTimeZone)} (EST Time) EOD</td>
+                                    <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(dueDate, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone))} (EOD)</td>
                                 ";
                         }
 
@@ -598,13 +598,16 @@ namespace LibraryManagement.API.Container.Implimentation
                 using (var transaction = _dbContext.Database.BeginTransaction())
                 {
                     try
+
                     {
                         // Getting a book issue record
                         var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId && x.BookId == SubmitDTO.BookId);
 
                         // Generate bill record if penalty is there
                         // 1 dollars a day penalty will applied.
-                        int lateDays = (DateTime.UtcNow - (bookIssued.IssueDate.AddDays(bookIssued.Days))).Days;
+                        int lateDays = (TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone)).Date -
+                                        TimeZoneInfo.ConvertTimeFromUtc(bookIssued.IssueDate.AddDays(bookIssued.Days), TimeZoneInfo.FindSystemTimeZoneById(user.Timezone)).Date).Days;
+
                         decimal taxRate = 0.13M;
                         if (lateDays > 0)
                         {
@@ -666,7 +669,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             BookTitle = book.Title,
                             UserId = bookIssued.UserId,
                             IssueDate = bookIssued.IssueDate,
-                            ReturnDate = DateTime.Now,
+                            ReturnDate = DateTime.UtcNow,
                             Days = bookIssued.Days,
                         };
 
@@ -680,10 +683,10 @@ namespace LibraryManagement.API.Container.Implimentation
 
                         var issueDate = submittedBook?.IssueDate ?? DateTime.Now; // Use the issue date from the book record or current date as fallback
                         var dueDate = issueDate.AddDays(submittedBook.Days); // Calculate the due date
-                        var submissionDate = DateTime.Now; // Get the current date and time of submission
+                        var submissionDate = DateTime.UtcNow; // Get the current date and time of submission
 
                         string bodyHtml = $@"
-                            <div style='max-width: 600px; margin: 0 left;'>
+                            <div style='max-width: 700px; margin: 0 left;'>
                                 <h2 style='text-align: left;'>Book Submission Confirmation</h2>
                                 <p>Dear {user.FirstName} {user.LastName},</p>
                                 <p>You have successfully submitted the following book to the Library:</p>
@@ -696,9 +699,9 @@ namespace LibraryManagement.API.Container.Implimentation
                                     </tr>
                                     <tr>
                                         <td style='padding: 8px; border: 1px solid #333;'>{book.Title}</td>
-                                        <td style='padding: 8px; border: 1px solid #333;'>{dueDate.ToString("D")}</td>
-                                        <td style='padding: 8px; border: 1px solid #333;'>{submissionDate.ToString("D")}</td>
-                                        <td style='padding: 8px; border: 1px solid #333;'>{(submissionDate <= dueDate ? "Yes" : "No")}</td>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(dueDate, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone))}</td>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(submissionDate, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone))}</td>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{(submissionDate.Date <= dueDate.Date ? "Yes" : "No")}</td>
                                     </tr>
                                 </table>
                                 <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
@@ -758,7 +761,7 @@ namespace LibraryManagement.API.Container.Implimentation
                         var dueDate = issuedBook.IssueDate.AddDays(issuedBook.Days);
 
                         string bodyHtml = $@"
-                    <div style='max-width: 600px; margin: 0 left;'>
+                    <div style='max-width: 700px; margin: 0 left;'>
                         <h2>Library Book Return Reminder</h2>
                         <p>Dear {user.FirstName} {user.LastName},</p>
                         <p>This is a friendly reminder about the book currently issued from the Library:</p>
@@ -769,7 +772,7 @@ namespace LibraryManagement.API.Container.Implimentation
                             </tr>
                             <tr>
                                 <td style='padding: 8px; border: 1px solid #333;'>{issuedBook.Book?.Title}</td>
-                                <td style='padding: 8px; border: 1px solid #333;'>{dueDate.ToString("D")}</td>
+                                <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(dueDate, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone))} (EOD)</td>
                             </tr>
                         </table>
                         <p>Please ensure to return this book by the due date to avoid any late fees or penalties.</p>
