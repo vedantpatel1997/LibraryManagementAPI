@@ -70,10 +70,10 @@ builder.Services.AddCors(p => p.AddDefaultPolicy(builder =>
     builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
 }));
 
-//builder.Services.AddCors(p => p.AddPolicy("corsPolicy", builder =>
-//{
-//    builder.WithOrigins("https://www.google.co.in").AllowAnyMethod().AllowAnyHeader();
-//}));
+builder.Services.AddCors(p => p.AddPolicy("corsPolicy", builder =>
+{
+    builder.WithOrigins("https://www.google.co.in").AllowAnyMethod().AllowAnyHeader();
+}));
 
 
 
