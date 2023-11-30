@@ -72,7 +72,7 @@ builder.Services.AddCors(p => p.AddDefaultPolicy(builder =>
 
 builder.Services.AddCors(p => p.AddPolicy("corsPolicy", builder =>
 {
-    builder.WithOrigins("https://www.google.co.in").AllowAnyMethod().AllowAnyHeader();
+    builder.WithOrigins("https://libraryconestoga.netlify.app").AllowAnyMethod().AllowAnyHeader();
 }));
 
 
