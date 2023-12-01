@@ -34,75 +34,35 @@ namespace LibraryManagement.API.Container.Implimentation
         public async Task<APIResponse<TokenResponse>> GenerateToken(UserCredentails usercred)
         {
             APIResponse<TokenResponse> response = new();
-            var user = await this._dbContext.Users.Include(x => x.Address).FirstOrDefaultAsync(x => (x.Username == usercred.Username || x.Email == usercred.Username));
-            if (user != null)
+            try
             {
-                var result = _passwordHasher.Verify(user.Password, usercred.Password);
-                if (!result)
-                {
-                    response.ResponseCode = 401;
-                    response.ErrorMessage = "Invalid Password";
-                    return response;
-                }
-
-                // Generate Token
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var tokenKey = Encoding.UTF8.GetBytes(this.jwtSettings.securityKey);
-                var tokenDesc = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(new Claim[]
-                    {
-                        new Claim("name", user.Username.Trim()),
-                        new Claim(ClaimTypes.Role, user.Role.Trim()),
-                        new Claim("UserId", user.UserId.ToString()) // Add the user's ID as a claim
-                    }),
-                    Expires = DateTime.UtcNow.AddSeconds(tokenTime),
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256)
-                };
-                var token = tokenHandler.CreateToken(tokenDesc);
-                var finalToken = tokenHandler.WriteToken(token);
-
-                response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username), userData = _mapper.Map<User, UserModal>(user) };
-                response.IsSuccess = true;
-                response.ResponseCode = 200;
-            }
-            else
-            {
-                response.ResponseCode = 401;
-                response.ErrorMessage = "UnAuthorized";
-            }
-            return response;
-        }
-
-        public async Task<APIResponse<TokenResponse>> GenerateRefreshToken(TokenResponse tokenResponse)
-        {
-            APIResponse<TokenResponse> response = new();
-            var _refreshToken = await this._dbContext.AuthenticationRefreshTokens.FirstOrDefaultAsync(x => x.RefreshToken == tokenResponse.RefreshToken);
-            if (_refreshToken != null)
-            {
-                // Retrieve the user's role from the database
-                var user = await this._dbContext.Users.Include(x=>x.Address).FirstOrDefaultAsync(x => x.Username == _refreshToken.UserId);
-
+                var user = await this._dbContext.Users.Include(x => x.Address).FirstOrDefaultAsync(x => (x.Username == usercred.Username || x.Email == usercred.Username));
                 if (user != null)
                 {
-                    // Create a new claims identity with the user's role and name
-                    var newClaims = new List<Claim>
+                    var result = _passwordHasher.Verify(user.Password, usercred.Password);
+                    if (!result)
                     {
-                        new Claim("name", user.Username),
-                        new Claim("role", user.Role),
-                        new Claim("UserId", user.UserId.ToString()) // Add the user's ID as a claim
-                    };
+                        response.ResponseCode = 401;
+                        response.ErrorMessage = "Invalid Password";
+                        return response;
+                    }
 
                     // Generate Token
                     var tokenHandler = new JwtSecurityTokenHandler();
                     var tokenKey = Encoding.UTF8.GetBytes(this.jwtSettings.securityKey);
-
-                    var newToken = new JwtSecurityToken(
-                        claims: newClaims,
-                        expires: DateTime.Now.AddSeconds(refreshTokenTime),
-                        signingCredentials: new SigningCredentials(
-                            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.jwtSettings.securityKey)), SecurityAlgorithms.HmacSha256));
-                    var finalToken = tokenHandler.WriteToken(newToken);
+                    var tokenDesc = new SecurityTokenDescriptor
+                    {
+                        Subject = new ClaimsIdentity(new Claim[]
+                        {
+                        new Claim("name", user.Username.Trim()),
+                        new Claim(ClaimTypes.Role, user.Role.Trim()),
+                        new Claim("UserId", user.UserId.ToString()) // Add the user's ID as a claim
+                        }),
+                        Expires = DateTime.UtcNow.AddSeconds(tokenTime),
+                        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256)
+                    };
+                    var token = tokenHandler.CreateToken(tokenDesc);
+                    var finalToken = tokenHandler.WriteToken(token);
 
                     response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username), userData = _mapper.Map<User, UserModal>(user) };
                     response.IsSuccess = true;
@@ -111,16 +71,77 @@ namespace LibraryManagement.API.Container.Implimentation
                 else
                 {
                     response.ResponseCode = 401;
-                    response.ErrorMessage = "User not found";
+                    response.ErrorMessage = "UnAuthorized";
                 }
             }
-            else
+            catch (Exception ex)
             {
-                response.ResponseCode = 401;
-                response.ErrorMessage = "UnAuthorized";
+                // Log the exception or handle it appropriately based on your application's logging and exception handling strategy.
+                response.ResponseCode = 500; // Internal Server Error
+                response.ErrorMessage = $"An unexpected error occurred: {ex.Message}";
             }
             return response;
         }
+
+        public async Task<APIResponse<TokenResponse>> GenerateRefreshToken(TokenResponse tokenResponse)
+        {
+            APIResponse<TokenResponse> response = new();
+            try
+            {
+
+
+                var _refreshToken = await this._dbContext.AuthenticationRefreshTokens.FirstOrDefaultAsync(x => x.RefreshToken == tokenResponse.RefreshToken);
+                if (_refreshToken != null)
+                {
+                    // Retrieve the user's role from the database
+                    var user = await this._dbContext.Users.Include(x => x.Address).FirstOrDefaultAsync(x => x.Username == _refreshToken.UserId);
+
+                    if (user != null)
+                    {
+                        // Create a new claims identity with the user's role and name
+                        var newClaims = new List<Claim>
+                    {
+                        new Claim("name", user.Username),
+                        new Claim("role", user.Role),
+                        new Claim("UserId", user.UserId.ToString()) // Add the user's ID as a claim
+                    };
+
+                        // Generate Token
+                        var tokenHandler = new JwtSecurityTokenHandler();
+                        var tokenKey = Encoding.UTF8.GetBytes(this.jwtSettings.securityKey);
+
+                        var newToken = new JwtSecurityToken(
+                            claims: newClaims,
+                            expires: DateTime.Now.AddSeconds(refreshTokenTime),
+                            signingCredentials: new SigningCredentials(
+                                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.jwtSettings.securityKey)), SecurityAlgorithms.HmacSha256));
+                        var finalToken = tokenHandler.WriteToken(newToken);
+
+                        response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username), userData = _mapper.Map<User, UserModal>(user) };
+                        response.IsSuccess = true;
+                        response.ResponseCode = 200;
+                    }
+                    else
+                    {
+                        response.ResponseCode = 401;
+                        response.ErrorMessage = "User not found";
+                    }
+                }
+                else
+                {
+                    response.ResponseCode = 401;
+                    response.ErrorMessage = "UnAuthorized";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it appropriately based on your application's logging and exception handling strategy.
+                response.ResponseCode = 500; // Internal Server Error
+                response.ErrorMessage = $"An unexpected error occurred: {ex.Message}";
+            }
+            return response;
+        }
+
 
         public async Task<string> GenerateRefreshToken(string username)
         {
