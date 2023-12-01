@@ -44,7 +44,8 @@ var authKey = builder.Configuration.GetValue<string>("JWTSettings:securityKey");
 builder.Services.AddAuthentication(item =>
 {
     item.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    item.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    item.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
 }).AddJwtBearer(item =>
 {
     item.RequireHttpsMetadata = true;
@@ -65,29 +66,26 @@ IMapper mapper = automapper.CreateMapper();
 builder.Services.AddSingleton(mapper);
 
 //CORS Policy
-builder.Services.AddCors(p => p.AddDefaultPolicy(builder =>
+builder.Services.AddCors(options =>
 {
-    builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
-}));
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+    });
 
-builder.Services.AddCors(p => p.AddPolicy("corsPolicy", builder =>
-{
-    builder.WithOrigins("https://libraryconestoga.netlify.app").AllowAnyMethod().AllowAnyHeader();
-}));
-
-
+    options.AddPolicy("corsPolicy", builder =>
+    {
+        builder.WithOrigins("https://libraryconestoga.netlify.app").AllowAnyMethod().AllowAnyHeader();
+    });
+});
 
 var jwtSettings = builder.Configuration.GetSection("JWTSettings");
 builder.Services.Configure<JWTSettings>(jwtSettings);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-//}
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseCors();
 
 app.UseHttpsRedirection();
