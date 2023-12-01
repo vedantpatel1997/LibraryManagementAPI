@@ -19,7 +19,7 @@ namespace LibraryManagement.API.Modal
 
         public string Phone { get; set; } 
         public int? AddressId { get; set; }
-        public string Timezone { get; set; } 
+        public string? Timezone { get; set; } 
 
         public string? Role { get; set; }
 

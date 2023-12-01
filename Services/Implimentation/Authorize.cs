@@ -71,7 +71,7 @@ namespace LibraryManagement.API.Container.Implimentation
                 else
                 {
                     response.ResponseCode = 401;
-                    response.ErrorMessage = "UnAuthorized";
+                    response.ErrorMessage = "User does not exist";
                 }
             }
             catch (Exception ex)
