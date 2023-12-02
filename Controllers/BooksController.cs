@@ -1,4 +1,5 @@
 ﻿using LibraryManagement.API.Container.Service;
+using LibraryManagement.API.Helper;
 using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace LibraryManagement.API.Controllers
 {
@@ -34,39 +36,50 @@ namespace LibraryManagement.API.Controllers
         [HttpGet("GetDate")]
         public async Task<IActionResult> GetDate()
         {
-            var curUTCTIME = DateTime.UtcNow;
-            var utcDateTime = curUTCTIME.AddDays(5);
+            //var curUTCTIME = DateTime.UtcNow;
+            //var utcDateTime = curUTCTIME.AddDays(5);
 
-            // Convert to India Standard Time (IST)
-            TimeZoneInfo indiaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
-            DateTime indiaDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, indiaTimeZone);
+            //// Convert to India Standard Time (IST)
+            //TimeZoneInfo indiaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            //DateTime indiaDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, indiaTimeZone);
 
-            // Convert to Canada EST time (Eastern Time)
-            TimeZoneInfo canadaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/New_York"); // or "Eastern Daylight Time" when daylight saving time is in effect
-            DateTime canadaDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, canadaTimeZone);
+            //// Convert to Canada EST time (Eastern Time)
+            //TimeZoneInfo canadaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/New_York"); // or "Eastern Daylight Time" when daylight saving time is in effect
+            //DateTime canadaDateTime = TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, canadaTimeZone);
 
 
-            var dates = new
-            {
-                CurrentUTCTIME = curUTCTIME,
-                IndiaTime = indiaDateTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                CanadaEST = canadaDateTime.ToString("yyyy-MM-dd HH:mm:ss"),
-            };
-            TimeZoneInfo easternTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            //var dates = new
+            //{
+            //    CurrentUTCTIME = curUTCTIME,
+            //    IndiaTime = indiaDateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+            //    CanadaEST = canadaDateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+            //};
+            //TimeZoneInfo easternTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
 
-            // Check whether daylight saving time is currently in effect
-            bool isDaylightSavingTime = easternTimeZone.IsDaylightSavingTime(DateTime.UtcNow.AddMonths(5));
+            //// Check whether daylight saving time is currently in effect
+            //bool isDaylightSavingTime = easternTimeZone.IsDaylightSavingTime(DateTime.UtcNow.AddMonths(5));
 
-            if (isDaylightSavingTime)
-            {
-                Console.WriteLine("It is currently Eastern Daylight Time (EDT).");
-            }
-            else
-            {
-                Console.WriteLine("It is currently Eastern Standard Time (EST).");
-            }
+            //if (isDaylightSavingTime)
+            //{
+            //    Console.WriteLine("It is currently Eastern Daylight Time (EDT).");
+            //}
+            //else
+            //{
+            //    Console.WriteLine("It is currently Eastern Standard Time (EST).");
+            //}
 
-            return Ok(dates);
+            //return Ok(dates);
+
+
+            string utcDateTimeString = "2023-12-01 09:46:25.6436863";
+            DateTime utcDateTime = DateTime.Parse(utcDateTimeString, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+
+            string userTimeZoneId = "America/New_York"; // Replace with the actual user's time zone
+
+            DateTimeOffset userDateTimeOffset = TimeZoneConverter.ConvertUtcToTimeZone(utcDateTime, userTimeZoneId);
+            string formattedUserDateTime = userDateTimeOffset.ToString("f");
+
+            return Ok(userDateTimeOffset);
         }
 
 

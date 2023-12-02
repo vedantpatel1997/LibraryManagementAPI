@@ -5,6 +5,8 @@ using LibraryManagement.API.Modal;
 using LibraryManagement.API.Repos.Models;
 using LibraryManagement.API.Services.Interface;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
+using NodaTime;
 using System.Net;
 using System.Transactions;
 
@@ -365,7 +367,6 @@ namespace LibraryManagement.API.Container.Implimentation
 
                     if (billingDetails.IssueDTOs.Count > 0)
                     {
-                        // Use Canada/Waterloo time zone by default
 
                         var user = await _dbContext.Users.FindAsync(billingDetails.IssueDTOs[0].UserId);
 
@@ -387,13 +388,12 @@ namespace LibraryManagement.API.Container.Implimentation
                         foreach (var issueDTO in billingDetails.IssueDTOs)
                         {
                             var book = await _dbContext.Books.FindAsync(issueDTO.BookId);
-                            var dueDate = DateTime.UtcNow.AddDays(issueDTO.Days); // Calculate the due date
-
+                            var estimatedReturnDate = DateTime.UtcNow.AddDays(issueDTO.Days);
                             bodyHtml += $@"
                                 <tr>
                                     <td style='padding: 8px; border: 1px solid #333;'>{book?.Title}</td>
                                     <td style='padding: 8px; border: 1px solid #333;'>{issueDTO.Days}</td>
-                                    <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(dueDate, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone))} (EOD)</td>
+                                    <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneConverter.ConvertUtcToTimeZone(estimatedReturnDate, user.Timezone).ToString("f")} (EOD)</td>
                                 ";
                         }
 
@@ -429,82 +429,6 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
-        public async Task<APIResponse> SendReminderForPendingBooks(int userId)
-        {
-            APIResponse response = new APIResponse();
-            using (var transaction = _dbContext.Database.BeginTransaction())
-            {
-                try
-                {
-                    // Retrieve the user's issued books
-                    var issuedBooks = await _dbContext.BookIssues
-                        .Include(x => x.Book)
-                        .Where(x => x.UserId == userId)
-                        .ToListAsync();
-
-                    if (issuedBooks.Count > 0)
-                    {
-                        var user = await _dbContext.Users.FindAsync(userId);
-                        string subject = "Library Book Return Reminder";
-
-                        string bodyHtml = $@"
-                    <div style='max-width: 600px; margin: 0 left;'>
-                        <h2>Library Book Return Reminder</h2>
-                        <p>Dear {user.FirstName} {user.LastName},</p>
-                        <p>This is a friendly reminder about the following books currently issued from the Library:</p>
-                        <table style='font-size: 14px; color: #666; border-collapse: collapse; width: 100%; border: 1px solid #333; border-radius: 8px;'>
-                            <tr>
-                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Book Title</th>
-                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Due Date</th>
-                            </tr>
-                ";
-
-                        foreach (var issuedBook in issuedBooks)
-                        {
-                            var dueDate = issuedBook.IssueDate.AddDays(issuedBook.Days); // Calculate the due date
-
-                            bodyHtml += $@"
-                        <tr>
-                            <td style='padding: 8px; border: 1px solid #333;'>{issuedBook.Book?.Title}</td>
-                            <td style='padding: 8px; border: 1px solid #333;'>{dueDate.ToString("D")}</td>
-                        ";
-                        }
-
-                        bodyHtml += @"
-                        </table>
-                        <p>Please ensure to return these books by the due date to avoid any late fees or penalties.</p>
-                        <p>If you have already returned these books, kindly disregard this reminder.</p>
-                        <br> <!-- Added space before the closing remarks -->
-                        <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
-                        <br> <!-- Added space before the closing remarks -->
-                        <p>Thank you for using our Library Management System.</p>
-                        <p style='text-align: left;'>Sincerely,<br>Vedant Patel</p>
-                        <p style='text-align: left;'>Library Owner/Administrator</p>
-                        <br/>
-                        <br/>
-                    </div>
-                ";
-                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
-                    }
-
-                    // Commit the transaction after sending reminders
-                    transaction.Commit();
-
-                    response.IsSuccess = true;
-                    response.ResponseCode = 200; // OK
-                }
-                catch (Exception ex)
-                {
-                    // Rollback the transaction in case of an error
-                    await transaction.RollbackAsync();
-
-                    response.ErrorMessage = ex.Message;
-                    response.ResponseCode = 500; // Internal Server Error
-                }
-            }
-
-            return response;
-        }
 
         public async Task<APIResponse> SendTemp(int userId)
         {
@@ -604,10 +528,11 @@ namespace LibraryManagement.API.Container.Implimentation
                         var bookIssued = await _dbContext.BookIssues.FirstOrDefaultAsync(x => x.UserId == SubmitDTO.UserId && x.BookId == SubmitDTO.BookId);
 
                         // Generate bill record if penalty is there
-                        // 1 dollars a day penalty will applied.
-                        int lateDays = (TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone)).Date -
-                                        TimeZoneInfo.ConvertTimeFromUtc(bookIssued.IssueDate.AddDays(bookIssued.Days), TimeZoneInfo.FindSystemTimeZoneById(user.Timezone)).Date).Days;
 
+
+                        // Calculate late days without considering the time
+                        int lateDays = (TimeZoneConverter.ConvertUtcToTimeZone(DateTime.UtcNow, user.Timezone).Date - TimeZoneConverter.ConvertUtcToTimeZone(bookIssued.IssueDate.AddDays(bookIssued.Days), user.Timezone).Date).Days;
+                        var latePenaltyMessage = "";
                         decimal taxRate = 0.13M;
                         if (lateDays > 0)
                         {
@@ -651,6 +576,15 @@ namespace LibraryManagement.API.Container.Implimentation
                             };
                             await _dbContext.BillingBooksInfos.AddAsync(billingbookInfo);
                             await _dbContext.SaveChangesAsync();
+
+                            latePenaltyMessage = $"<p style='color: red;'>Late Penalty Applied: ${penaltyAmount} for {lateDays} days.</p>";
+
+                            // Generate an invoice for late penalty
+                            // Add the necessary code to create an invoice and save it to the database or file system
+                            // ...
+
+                            // You can include a link to the invoice in the email or provide instructions on where to find it.
+                            latePenaltyMessage += "<p>Your invoice for  late penalty is available in the Invoice section of your account.</p>";
 
                         }
 
@@ -697,13 +631,21 @@ namespace LibraryManagement.API.Container.Implimentation
                                         <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Submitted Date</th>
                                         <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Submit on Time</th>
                                     </tr>
-                                    <tr>
+                                     <tr>
                                         <td style='padding: 8px; border: 1px solid #333;'>{book.Title}</td>
-                                        <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(dueDate, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone))}</td>
-                                        <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(submissionDate, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone))}</td>
-                                        <td style='padding: 8px; border: 1px solid #333;'>{(submissionDate.Date <= dueDate.Date ? "Yes" : "No")}</td>
+    
+                                        <!-- Convert dueDate to user's time zone -->
+                                        <td style='padding: 8px; border: 1px solid #333;'> {TimeZoneConverter.ConvertUtcToTimeZone(dueDate, user.Timezone).ToString("f")}</td>
+    
+                                        <!-- Convert submissionDate to user's time zone -->
+                                        <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneConverter.ConvertUtcToTimeZone(submissionDate, user.Timezone).ToString("f")}</td>
+    
+                                        <!-- Check if submissionDate is on or before dueDate -->
+                                        <td style='padding: 8px; border: 1px solid #333;'>{(TimeZoneConverter.ConvertUtcToTimeZone(submissionDate, user.Timezone).Date <= TimeZoneConverter.ConvertUtcToTimeZone(dueDate, user.Timezone).Date ? "Yes" : "No")}</td>
                                     </tr>
                                 </table>
+                                {latePenaltyMessage}
+                                <br/>
                                 <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
                                 <br> <!-- Added space before the closing remarks -->
                                 <p>Thank you for using our Library Management System.</p>
@@ -739,6 +681,84 @@ namespace LibraryManagement.API.Container.Implimentation
             return response;
         }
 
+        public async Task<APIResponse> SendReminderForPendingBooks(int userId)
+        {
+            APIResponse response = new APIResponse();
+            using (var transaction = _dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    // Retrieve the user's issued books
+                    var issuedBooks = await _dbContext.BookIssues
+                        .Include(x => x.Book)
+                        .Where(x => x.UserId == userId)
+                        .ToListAsync();
+
+                    if (issuedBooks.Count > 0)
+                    {
+                        var user = await _dbContext.Users.FindAsync(userId);
+                        string subject = "Library Book Return Reminder";
+
+                        string bodyHtml = $@"
+                    <div style='max-width: 600px; margin: 0 left;'>
+                        <h2>Library Book Return Reminder</h2>
+                        <p>Dear {user.FirstName} {user.LastName},</p>
+                        <p>This is a friendly reminder about the following books currently issued from the Library:</p>
+                        <table style='font-size: 14px; color: #666; border-collapse: collapse; width: 100%; border: 1px solid #333; border-radius: 8px;'>
+                            <tr>
+                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Book Title</th>
+                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Due Date</th>
+                            </tr>
+                         ";
+
+                        foreach (var issuedBook in issuedBooks)
+                        {
+                            var dueDate = issuedBook.IssueDate.AddDays(issuedBook.Days); // Calculate the due date
+
+                            bodyHtml += $@"
+                        <tr>
+                            <td style='padding: 8px; border: 1px solid #333;'>{issuedBook.Book?.Title}</td>
+                            <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneConverter.ConvertUtcToTimeZone(dueDate, user.Timezone).ToString("f")} (EOD)</td>
+                        ";
+                        }
+
+                        bodyHtml += @"
+                        </table>
+                        <p>Check invoice for this order in 'Your Invoices' section.</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>Please ensure to return these books by the due date to avoid any late fees or penalties.</p>
+                        <p>If you have already returned these books, kindly disregard this reminder.</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                        <br> <!-- Added space before the closing remarks -->
+                        <p>Thank you for using our Library Management System.</p>
+                        <p style='text-align: left;'>Sincerely,<br>Vedant Patel</p>
+                        <p style='text-align: left;'>Library Owner/Administrator</p>
+                        <br/>
+                        <br/>
+                    </div>
+                ";
+                        await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
+                    }
+
+                    // Commit the transaction after sending reminders
+                    transaction.Commit();
+
+                    response.IsSuccess = true;
+                    response.ResponseCode = 200; // OK
+                }
+                catch (Exception ex)
+                {
+                    // Rollback the transaction in case of an error
+                    await transaction.RollbackAsync();
+
+                    response.ErrorMessage = ex.Message;
+                    response.ResponseCode = 500; // Internal Server Error
+                }
+            }
+
+            return response;
+        }
         public async Task<APIResponse> SendReminderForPendingBook(int userId, int bookId)
         {
             APIResponse response = new APIResponse();
@@ -759,34 +779,35 @@ namespace LibraryManagement.API.Container.Implimentation
 
                         // Calculate the due date for the specific book
                         var dueDate = issuedBook.IssueDate.AddDays(issuedBook.Days);
+                        //dueDate = DateTime.SpecifyKind(dueDate, DateTimeKind.Utc);
 
                         string bodyHtml = $@"
-                    <div style='max-width: 700px; margin: 0 left;'>
-                        <h2>Library Book Return Reminder</h2>
-                        <p>Dear {user.FirstName} {user.LastName},</p>
-                        <p>This is a friendly reminder about the book currently issued from the Library:</p>
-                        <table style='font-size: 14px; color: #666; border-collapse: collapse; width: 100%; border: 1px solid #333; border-radius: 8px;'>
-                            <tr>
-                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Book Title</th>
-                                <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Due Date</th>
-                            </tr>
-                            <tr>
-                                <td style='padding: 8px; border: 1px solid #333;'>{issuedBook.Book?.Title}</td>
-                                <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneInfo.ConvertTimeFromUtc(dueDate, TimeZoneInfo.FindSystemTimeZoneById(user.Timezone))} (EOD)</td>
-                            </tr>
-                        </table>
-                        <p>Please ensure to return this book by the due date to avoid any late fees or penalties.</p>
-                        <p>If you have already returned this book, kindly disregard this reminder.</p>
-                        <br> <!-- Added space before the closing remarks -->
-                        <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
-                        <br> <!-- Added space before the closing remarks -->
-                        <p>Thank you for using our Library Management System.</p>
-                        <p style='text-align: left;'>Sincerely,<br>Vedant Patel</p>
-                        <p style='text-align: left;'>Library Owner/Administrator</p>
-                        <br/>
-                        <br/>
-                    </div>
-                ";
+                            <div style='max-width: 700px; margin: 0 left;'>
+                                <h2>Library Book Return Reminder</h2>
+                                <p>Dear {user.FirstName} {user.LastName},</p>
+                                <p>This is a friendly reminder about the book currently issued from the Library:</p>
+                                <table style='font-size: 14px; color: #666; border-collapse: collapse; width: 100%; border: 1px solid #333; border-radius: 8px;'>
+                                    <tr>
+                                        <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Book Title</th>
+                                        <th style='padding: 8px; text-align: left; border: 1px solid #333;'>Due Date</th>
+                                    </tr>
+                                    <tr>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{issuedBook.Book?.Title}</td>
+                                        <td style='padding: 8px; border: 1px solid #333;'>{TimeZoneConverter.ConvertUtcToTimeZone(dueDate, user.Timezone).ToString("f")} (EOD)</td>
+                                    </tr>
+                                </table>
+                                <p>Please ensure to return this book by the due date to avoid any late fees or penalties.</p>
+                                <p>If you have already returned this book, kindly disregard this reminder.</p>
+                                <br> <!-- Added space before the closing remarks -->
+                                <p>If you have any questions or need further assistance, please feel free to reach out to our support team.</p>
+                                <br> <!-- Added space before the closing remarks -->
+                                <p>Thank you for using our Library Management System.</p>
+                                <p style='text-align: left;'>Sincerely,<br>Vedant Patel</p>
+                                <p style='text-align: left;'>Library Owner/Administrator</p>
+                                <br/>
+                                <br/>
+                            </div>
+                        ";
 
                         await _emailMessageService.SendMessage(user.Email, subject, bodyHtml);
 
