@@ -8,6 +8,7 @@ namespace LibraryManagement.API.Container.Service
     public interface IBooksUsersTransactions
     {
         Task<APIResponse<List<IssueDTO>>> GetBooksByUserId(int userId);
+        Task<APIResponse<List<IssueDTO>>> GetDueBooks();
         Task<APIResponse<List<IssueDTO>>> GetUsersByBookId(int bookId);
         Task<APIResponse<List<SubmitBooksInfo>>> GetBooksHistoryByUserId(int bookId);
         Task<APIResponse<List<HistoryModal>>> GetUsersHistoryByBookId(int bookId);

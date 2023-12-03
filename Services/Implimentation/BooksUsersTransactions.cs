@@ -60,6 +60,30 @@ namespace LibraryManagement.API.Container.Implimentation
 
             return response;
         }
+        public async Task<APIResponse<List<IssueDTO>>> GetDueBooks()
+        {
+            var response = new APIResponse<List<IssueDTO>>();
+
+            try
+            {
+                // Query the database to get books issued to the user with the specified userId
+                var issuedBooks = await _dbContext.BookIssues
+                    .Include(x => x.User)
+                    .Include(x => x.Book)
+                    .Include(x => x.Book.Category)
+                    .ToListAsync();
+
+                response.Data = _mapper.Map<List<BookIssue>, List<IssueDTO>>(issuedBooks);
+                response.IsSuccess = true;
+                response.ResponseCode = 200; // OK
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.ResponseCode = 500; // Internal Server Error
+            }
+            return response;
+        }
 
         public async Task<APIResponse<List<SubmitBooksInfo>>> GetBooksHistoryByUserId(int userId)
         {

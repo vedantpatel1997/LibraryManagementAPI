@@ -20,6 +20,12 @@ namespace LibraryManagement.API.Controllers
         {
             _bUTransactionSvs = BUTransactionSvs;
         }
+        [HttpGet("GetDueBooks")]
+        public async Task<IActionResult> GetDueBooks(int userId)
+        {
+            var data = await this._bUTransactionSvs.GetDueBooks();
+            return Ok(data);
+        }
         [HttpGet("GetBooksByUserID")]
         public async Task<IActionResult> GetBooksByUserID(int userId)
         {
