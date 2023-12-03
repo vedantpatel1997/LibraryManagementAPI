@@ -30,13 +30,20 @@ namespace LibraryManagement.API.Helper
 
             CreateMap<BookIssue, IssueDTO>()
                 .ForMember(dest => dest.Book, opt => opt.MapFrom(src => src.Book))
-                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User))
+                .ForMember(dest => dest.IssueDate, opt => opt.MapFrom(src => src.IssueDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")));
 
-            CreateMap<SubmitBooksInfo, HistoryModal>();
-            CreateMap<BillingSummary, BillingSummaryModal>().ReverseMap();
+            CreateMap<SubmitBooksInfo, HistoryModal>()
+                .ForMember(dest => dest.IssueDate, opt => opt.MapFrom(src => src.IssueDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
+                .ForMember(dest => dest.ReturnDate, opt => opt.MapFrom(src => src.ReturnDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")));
+                
+            CreateMap<BillingSummary, BillingSummaryModal>()
+                .ForMember(dest => dest.Date, opt => opt.MapFrom(src => src.Date.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
+                .ReverseMap();
 
             CreateMap<BillingBooksInfo, BillingBooksInfoModal>()
                 .ForMember(dest => dest.BookCategory, opt => opt.MapFrom(src => src.BookCategory.Trim()))
+                .ForMember(dest => dest.EstimatedReturnDate, opt => opt.MapFrom(src => src.EstimatedReturnDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")))
                 .ReverseMap();
         }
     }
