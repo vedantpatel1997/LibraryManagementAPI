@@ -18,17 +18,19 @@ namespace LibraryManagement.API.Container.Implimentation
     {
         private readonly LibraryManagementContext _dbContext;
         private readonly JWTSettings jwtSettings;
+        private readonly IEmailMessageService _emailService;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IMapper _mapper;
         private readonly int tokenTime = 120; // seconds
         private readonly int refreshTokenTime = 300;//seconds
 
-        public Authorize(LibraryManagementContext dbContext, IOptions<JWTSettings> options, IPasswordHasher passwordHasher, IMapper mapper)
+        public Authorize(LibraryManagementContext dbContext, IOptions<JWTSettings> options, IPasswordHasher passwordHasher, IMapper mapper, IEmailMessageService emailService)
         {
             this._dbContext = dbContext;
             this.jwtSettings = options.Value;
             _passwordHasher = passwordHasher;
             _mapper = mapper;
+            this._emailService = emailService;
         }
 
         public async Task<APIResponse<TokenResponse>> GenerateToken(UserCredentails usercred)
@@ -63,6 +65,9 @@ namespace LibraryManagement.API.Container.Implimentation
                     };
                     var token = tokenHandler.CreateToken(tokenDesc);
                     var finalToken = tokenHandler.WriteToken(token);
+
+                    // Sending mail 
+                    SendMail(user);
 
                     response.Data = new TokenResponse() { Token = finalToken, RefreshToken = await GenerateRefreshToken(user.Username), userData = _mapper.Map<User, UserModal>(user) };
                     response.IsSuccess = true;
@@ -167,6 +172,34 @@ namespace LibraryManagement.API.Container.Implimentation
                 await this._dbContext.SaveChangesAsync();
                 return refreshToken;
             }
+        }
+
+        private void SendMail(User user)
+        {
+            var ownerTimezone = "America/New_York";
+            var subject = "Login detected";
+            var mailBody = $@"
+                            <html>
+                                <body>
+                                    <p>Dear Owner,</p>
+                
+                                    <p>This is to inform you that the following user has successfully logged in:</p>
+                
+                                    <ul>
+                                        <li><strong>Username:</strong> {user.Username}</li>
+                                        <li><strong>Name:</strong> {user.FirstName} {user.LastName}</li>
+                                        <li><strong>Email:</strong> {user.Email}</li>
+                                        <li><strong>Login Date and Time:</strong> {TimeZoneConverter.ConvertUtcToTimeZone(DateTime.UtcNow, ownerTimezone).ToString("F")} according to owner timezone</li>
+                                        <li><strong>Login Date and Time:</strong> {TimeZoneConverter.ConvertUtcToTimeZone(DateTime.UtcNow, user.Timezone).ToString("F")} according to user timezone</li>
+                                    </ul>
+                
+                                    <p>Thank you for your attention.</p>
+                
+                                    <p>Best regards,<br/>
+                                    Library Management System</p>
+                                </body>
+                            </html>";
+            _emailService.SendMessage("vedantp9@gmail.com", subject, mailBody);
         }
     }
 }
