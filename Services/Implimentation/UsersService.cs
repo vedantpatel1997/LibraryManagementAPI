@@ -435,12 +435,13 @@ namespace LibraryManagement.API.Container.Implimentation
 
                 // Check if the old password matches the current password
 
-                if (_passwordHasher.Verify(user.Password, _passwordHasher.Hash(password.oldPassword)))
+                if (!_passwordHasher.Verify(user.Password, password.oldPassword))
                 {
                     response.ResponseCode = 400; // Bad Request
                     response.ErrorMessage = "Password not match";
                     return response;
                 }
+
 
                 user.Password = _passwordHasher.Hash(password.newPassword);
 
